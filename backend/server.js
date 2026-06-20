@@ -143,12 +143,12 @@ function protectStatic(req, res, next) {
   next();
 }
 
-// ─── FIX 2: Static Path — Render pe __dirname ke saath public folder ───
-// Agar server.js /src ya /backend mein hai toh '../public' sahi hai
-// Agar server.js root mein hai toh './public' use karo
+// ─── FIX 2: Static Path — server.js backend/ mein hai, public/ uske bahar hai ───
+// Render path: /opt/render/project/src/backend/server.js
+// Public path: /opt/render/project/src/public/
 const publicPath = process.env.PUBLIC_PATH
   ? path.resolve(process.env.PUBLIC_PATH)
-  : path.join(__dirname, 'public'); // Default: same folder mein public/
+  : path.join(__dirname, '..', 'public'); // backend/ se ek upar jaao, phir public/
 
 app.use(protectStatic);
 app.use(express.static(publicPath));
