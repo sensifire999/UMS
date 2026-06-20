@@ -36,8 +36,21 @@ app.use(helmet({
   }
 }));
 
+// ─── FIX 1: CORS — same-origin Render pe sab allow ───
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5500'],
+  origin: function(origin, callback) {
+    // Same-origin requests (Render pe frontend + backend ek hi server pe hai)
+    if (!origin) return callback(null, true);
+    // localhost development bhi allow karo
+    if (origin.includes('localhost') || origin.includes('onrender.com')) {
+      return callback(null, true);
+    }
+    // Custom domain support via env variable
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
@@ -130,8 +143,13 @@ function protectStatic(req, res, next) {
   next();
 }
 
-// ─── Serve Static Files ───
-const publicPath = path.join(__dirname, '../public');
+// ─── FIX 2: Static Path — Render pe __dirname ke saath public folder ───
+// Agar server.js /src ya /backend mein hai toh '../public' sahi hai
+// Agar server.js root mein hai toh './public' use karo
+const publicPath = process.env.PUBLIC_PATH
+  ? path.resolve(process.env.PUBLIC_PATH)
+  : path.join(__dirname, 'public'); // Default: same folder mein public/
+
 app.use(protectStatic);
 app.use(express.static(publicPath));
 
@@ -142,6 +160,14 @@ app.get('/', (req, res) => {
 
 // ─── CAPTCHA Store ───
 const captchaStore = new Map();
+
+// CAPTCHA cleanup — expire hue entries har 10 min mein delete karo
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, data] of captchaStore.entries()) {
+    if (data.expires < now) captchaStore.delete(id);
+  }
+}, 600000);
 
 function sanitise(str) {
   if (typeof str !== 'string') return '';
@@ -164,7 +190,8 @@ app.get('/api/auth/captcha', (req, res) => {
   }
   const question = `What is ${a} ${op} ${b} ?`;
   const id = crypto.randomBytes(16).toString('hex');
-  captchaStore.set(id, { answer, expires: Date.now() + 300000 });
+  // answer Number ke roop mein store karo
+  captchaStore.set(id, { answer: Number(answer), expires: Date.now() + 300000 });
   res.json({ id, question });
 });
 
@@ -173,42 +200,57 @@ app.post('/api/auth/login', [
   body('username').isLength({ min: 3 }).trim().escape(),
   body('password').isLength({ min: 8 }),
   body('role').isIn(['student', 'teacher', 'admin']),
-  body('captcha_answer').isInt(),
+  // FIX 3: .toInt() add kiya — string "5" ko number 5 mein convert karo
+  body('captcha_answer').isInt().toInt(),
   body('captcha_id').notEmpty(),
   body('device_fingerprint').optional().isString()
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Validation errors:', JSON.stringify(errors.array()));
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
 
   const { username, password, role, captcha_answer, captcha_id, device_fingerprint } = req.body;
 
   if (!captchaStore.has(captcha_id)) {
-    return res.status(400).json({ message: 'CAPTCHA expired or invalid' });
+    return res.status(400).json({ message: 'CAPTCHA expired or invalid. Please refresh.' });
   }
   const captcha = captchaStore.get(captcha_id);
-  if (captcha.answer !== captcha_answer) {
-    return res.status(400).json({ message: 'Incorrect CAPTCHA' });
+
+  // FIX 3 cont: parseInt se ensure karo dono Number hain comparison ke time
+  if (Number(captcha.answer) !== parseInt(captcha_answer, 10)) {
+    captchaStore.delete(captcha_id); // ek baar use, phir delete
+    return res.status(400).json({ message: 'Incorrect CAPTCHA answer.' });
   }
   captchaStore.delete(captcha_id);
 
-  const email = `${username}@umslaxmannagar.edu`;
+  // FIX 4: Username mein email nahi, sirf username — server khud email banata hai
+  // Agar user galti se poora email type kar de toh handle karo
+  let cleanUsername = username;
+  if (cleanUsername.includes('@')) {
+    cleanUsername = cleanUsername.split('@')[0];
+  }
+
+  const email = `${cleanUsername}@umslaxmannagar.edu`;
+  console.log(`[LOGIN] Attempting login for: ${email}, role: ${role}`);
+
   try {
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     if (authError) {
+      console.error('[LOGIN] Supabase auth error:', authError.message);
       await supabaseAdmin.from('security_logs').insert({
         ip_address: req.ip,
         user_agent: req.headers['user-agent'],
         event_type: 'FAILED_LOGIN',
         browser_fingerprint: device_fingerprint,
-        details: { username, role },
+        details: { username: cleanUsername, role, error: authError.message },
         severity: 'WARN'
       });
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials. Check username and password.' });
     }
 
     const { data: profile, error: profError } = await supabaseAdmin
@@ -216,12 +258,25 @@ app.post('/api/auth/login', [
       .select('id, full_name, role')
       .eq('id', authData.user.id)
       .single();
-    if (profError || !profile || profile.role !== role) {
-      return res.status(401).json({ message: 'Role mismatch' });
+
+    if (profError) {
+      console.error('[LOGIN] Profile fetch error:', profError.message);
+      return res.status(500).json({ message: 'Could not fetch user profile.' });
     }
 
-    const token = generateToken({ id: profile.id, username, role: profile.role });
+    if (!profile) {
+      console.error('[LOGIN] Profile not found for user:', authData.user.id);
+      return res.status(401).json({ message: 'User profile not found. Contact admin.' });
+    }
 
+    if (profile.role !== role) {
+      console.error(`[LOGIN] Role mismatch: DB role=${profile.role}, requested role=${role}`);
+      return res.status(401).json({ message: `Role mismatch. Your account role is: ${profile.role}` });
+    }
+
+    const token = generateToken({ id: profile.id, username: cleanUsername, role: profile.role });
+
+    // FIX 5: Cookie sameSite — Render (HTTPS) pe 'none' nahi, 'strict' theek hai
     res.cookie('cms_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -238,10 +293,11 @@ app.post('/api/auth/login', [
       severity: 'OK'
     });
 
-    res.json({ token, role: profile.role, username, full_name: profile.full_name });
+    console.log(`[LOGIN] Success: ${email}, role: ${profile.role}`);
+    res.json({ token, role: profile.role, username: cleanUsername, full_name: profile.full_name });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('[LOGIN] Unexpected error:', err);
+    res.status(500).json({ message: 'Internal server error. Try again.' });
   }
 });
 
@@ -743,7 +799,7 @@ app.get('/api/admin/security-logs', verifyTokenAPI, requireRole('admin'), async 
   }
 });
 
-// ─── Custom 404 Page (Red Warning Theme) ───
+// ─── Custom 404 Page ───
 app.use((req, res) => {
   res.status(404).send(`
     <!DOCTYPE html>
@@ -754,85 +810,15 @@ app.use((req, res) => {
       <title>404 - Page Not Found | UMS Laxman Nagar</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
-        body {
-          font-family: 'Inter', sans-serif;
-          background: #7f1d1d;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          margin: 0;
-          padding: 20px;
-        }
-        .card {
-          background: #991b1b;
-          border: 2px solid #fca5a5;
-          border-radius: 20px;
-          padding: 60px 48px;
-          text-align: center;
-          max-width: 520px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-          position: relative;
-          overflow: hidden;
-        }
-        .card::before {
-          content: '⚠';
-          position: absolute;
-          top: -30px;
-          right: -30px;
-          font-size: 120px;
-          opacity: 0.1;
-          transform: rotate(20deg);
-        }
-        h1 {
-          font-size: 80px;
-          font-weight: 800;
-          color: #fca5a5;
-          margin: 0;
-          line-height: 1;
-          text-shadow: 0 4px 20px rgba(252, 165, 165, 0.3);
-        }
-        .sub {
-          font-size: 22px;
-          font-weight: 600;
-          color: #fecaca;
-          margin: 16px 0 8px;
-        }
-        .desc {
-          color: #fca5a5;
-          font-size: 15px;
-          margin: 8px 0 24px;
-          opacity: 0.9;
-        }
-        a {
-          display: inline-block;
-          background: #fca5a5;
-          color: #7f1d1d;
-          font-weight: 700;
-          padding: 12px 28px;
-          border-radius: 50px;
-          text-decoration: none;
-          transition: background 0.2s, transform 0.1s;
-          box-shadow: 0 4px 12px rgba(252, 165, 165, 0.4);
-        }
-        a:hover {
-          background: #fecaca;
-          transform: translateY(-2px);
-        }
-        .security-badge {
-          margin-top: 24px;
-          font-size: 12px;
-          color: #fca5a5;
-          opacity: 0.6;
-          letter-spacing: 1px;
-        }
-        .security-badge span {
-          display: inline-block;
-          background: rgba(252, 165, 165, 0.15);
-          padding: 4px 14px;
-          border-radius: 30px;
-          border: 1px solid rgba(252, 165, 165, 0.2);
-        }
+        body { font-family: 'Inter', sans-serif; background: #7f1d1d; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+        .card { background: #991b1b; border: 2px solid #fca5a5; border-radius: 20px; padding: 60px 48px; text-align: center; max-width: 520px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; overflow: hidden; }
+        .card::before { content: '⚠'; position: absolute; top: -30px; right: -30px; font-size: 120px; opacity: 0.1; transform: rotate(20deg); }
+        h1 { font-size: 80px; font-weight: 800; color: #fca5a5; margin: 0; line-height: 1; }
+        .sub { font-size: 22px; font-weight: 600; color: #fecaca; margin: 16px 0 8px; }
+        .desc { color: #fca5a5; font-size: 15px; margin: 8px 0 24px; opacity: 0.9; }
+        a { display: inline-block; background: #fca5a5; color: #7f1d1d; font-weight: 700; padding: 12px 28px; border-radius: 50px; text-decoration: none; }
+        .security-badge { margin-top: 24px; font-size: 12px; color: #fca5a5; opacity: 0.6; }
+        .security-badge span { display: inline-block; background: rgba(252,165,165,0.15); padding: 4px 14px; border-radius: 30px; border: 1px solid rgba(252,165,165,0.2); }
       </style>
     </head>
     <body>
@@ -841,9 +827,7 @@ app.use((req, res) => {
         <div class="sub">⛔ Access Denied</div>
         <div class="desc">The page you requested does not exist or has been moved.<br>Please check the URL or return to the secure login.</div>
         <a href="/">← Back to Login Portal</a>
-        <div class="security-badge">
-          <span>🔒 Security Logged • Threat Detected</span>
-        </div>
+        <div class="security-badge"><span>🔒 Security Logged • Threat Detected</span></div>
       </div>
     </body>
     </html>
@@ -861,4 +845,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`UMS Laxman Nagar CMS server running on port ${PORT}`);
+  console.log(`Public path: ${publicPath}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
