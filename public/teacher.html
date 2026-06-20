@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://* http://*; connect-src 'self';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Teacher Console | UMS Laxman Nagar CMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
+  <style>
+    /* Same styles as before – include all needed classes */
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    :root { --sw:260px; }
+    #sidebar { width:var(--sw); background:#fff; border-right:1px solid #e2e8f0; transition:transform .3s cubic-bezier(.4,0,.2,1); }
+    @media(max-width:1023px) { #sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); z-index:50; box-shadow:4px 0 24px rgba(15,23,42,.12); } #sidebar.open { transform:translateX(0); } #sb-overlay { display:block; } }
+    #sb-overlay { display:none; }
+    .nav-link { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:#64748b; font-size:14px; font-weight:500; cursor:pointer; transition:background .15s,color .15s; border:none; background:none; width:100%; text-align:left; user-select:none; }
+    .nav-link:hover { background:#f1f5f9; color:#334155; }
+    .nav-link.active { background:#eef2ff; color:#4f46e5; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 2px 12px rgba(15,23,42,.05); }
+    #topbar { background:#fff; border-bottom:1px solid #e2e8f0; }
+    .pane { display:none; } .pane.active { display:block; }
+    th { color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:10px 14px; text-align:left; background:#f8fafc; white-space:nowrap; }
+    td { color:#334155; font-size:13px; padding:10px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+    .marks-input { border:1.5px solid #e2e8f0; border-radius:7px; background:#f8fafc; padding:5px 8px; font-size:13px; color:#1e293b; width:72px; text-align:center; transition:border-color .2s,box-shadow .2s; outline:none; font-family:'JetBrains Mono',monospace; }
+    .marks-input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12); background:#fff; }
+    .marks-input.invalid { border-color:#ef4444; background:#fff5f5; }
+    .marks-input.valid { border-color:#10b981; background:#f0fdf4; }
+    .checkbox-att { width:18px; height:18px; accent-color:#6366f1; cursor:pointer; border-radius:4px; }
+    .btn-primary { background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer; transition:transform .15s,box-shadow .15s,opacity .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn-primary:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,.3); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-outline { background:#fff; color:#4f46e5; border:1.5px solid #c7d2fe; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s,border-color .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn-outline:hover { background:#eef2ff; border-color:#818cf8; }
+    .toast { position:fixed; top:18px; right:18px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; opacity:0; transform:translateX(50px); transition:opacity .3s,transform .3s; pointer-events:none; max-width:340px; box-shadow:0 8px 30px rgba(0,0,0,.12); }
+    .toast.show { opacity:1; transform:translateX(0); }
+    .val-err { color:#dc2626; font-size:11px; margin-top:2px; display:none; }
+    .val-err.show { display:block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spin { animation:spin .7s linear infinite; }
+    select.course-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:8px 12px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; }
+    select.course-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+    .payload-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#334155; max-height:200px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+    .form-inp { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; width:100%; transition:border-color .2s; }
+    .form-inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); background:#fff; }
+    .form-inp::placeholder { color:#94a3b8; }
+    .form-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; width:100%; }
+    .form-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 flex overflow-hidden" style="height:100vh;">
+
+  <div id="toast" class="toast" role="alert"></div>
+  <div id="sb-overlay" class="fixed inset-0 bg-slate-900/40 z-40 hidden"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="flex flex-col h-screen shrink-0">
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      </div>
+      <div><p class="text-slate-800 text-sm font-bold">UMS Laxman Nagar CMS</p><p class="text-violet-600 text-xs mono font-semibold">Faculty Console</p></div>
+    </div>
+    <div class="px-5 py-4 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-sm" id="sb-avatar">–</div>
+        <div><p class="text-slate-800 text-sm font-semibold" id="sb-name">Loading…</p><p class="text-violet-600 text-xs font-semibold mono">Faculty</p></div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <button class="nav-link active" data-pane="overview"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Overview</button>
+      <button class="nav-link" data-pane="attendance"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Mark Attendance</button>
+      <button class="nav-link" data-pane="marks"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Enter Marks</button>
+      <button class="nav-link" data-pane="courses"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>My Courses</button>
+      <!-- NEW: Broadcasts -->
+      <button class="nav-link" data-pane="broadcasts">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Broadcasts
+      </button>
+    </nav>
+    <div class="px-3 py-4 border-t border-slate-100">
+      <button id="logout-btn" class="nav-link text-rose-500 hover:bg-rose-50 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Secure Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <header id="topbar" class="flex items-center justify-between px-4 lg:px-6 py-3 shrink-0">
+      <div class="flex items-center gap-3">
+        <button id="menu-btn" class="lg:hidden text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100" aria-label="Menu"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div><h1 class="text-slate-800 font-bold text-base" id="page-title">Overview</h1><p class="text-slate-400 text-xs" id="page-sub">Faculty Management Console</p></div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5"><span class="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span><span class="text-violet-700 text-xs mono font-semibold">Role: Faculty</span></div>
+        <div class="text-slate-400 text-xs mono bg-slate-100 px-2.5 py-1 rounded-lg" id="session-timer">00:00:00</div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+      <!-- PANE: OVERVIEW (unchanged) -->
+      <div class="pane active" id="pane-overview">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Assigned Courses</p><p class="text-2xl font-extrabold text-indigo-600">3</p><p class="text-xs text-slate-400 mt-0.5">Semester 5</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Students</p><p class="text-2xl font-extrabold text-slate-800">186</p><p class="text-xs text-slate-400 mt-0.5">Across all sections</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Avg. Attendance</p><p class="text-2xl font-extrabold text-emerald-600">82%</p><p class="text-xs text-slate-400 mt-0.5">This month</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Pending Marks</p><p class="text-2xl font-extrabold text-rose-500">12</p><p class="text-xs text-slate-400 mt-0.5">Submissions due</p></div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">Assigned Courses – Access Controlled View</h2></div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Course Code</th><th>Course Title</th><th>Section</th><th class="text-right">Students</th><th>Schedule</th><th class="text-center">Access Level</th><th class="text-center">Status</th></tr></thead><tbody id="courses-overview-tbody"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- PANE: ATTENDANCE (unchanged) -->
+      <div class="pane" id="pane-attendance"> ... </div>
+
+      <!-- PANE: MARKS (unchanged) -->
+      <div class="pane" id="pane-marks"> ... </div>
+
+      <!-- PANE: COURSES (unchanged) -->
+      <div class="pane" id="pane-courses"> ... </div>
+
+      <!-- PANE: BROADCASTS (New) -->
+      <div class="pane" id="pane-broadcasts">
+        <div class="card p-6 mb-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">Create New Broadcast</h2>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Message</label>
+              <textarea id="teacher-broadcast-msg" class="form-inp" rows="3" placeholder="Type your message..." maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Image URL (optional)</label>
+              <input type="url" id="teacher-broadcast-image" class="form-inp" placeholder="https://example.com/image.jpg" />
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Type</label>
+              <select id="teacher-broadcast-type" class="form-sel w-full">
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+            <button id="teacher-broadcast-submit" class="btn-primary w-40">Send Broadcast</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">📢 All Broadcasts</h2>
+          <div id="teacher-broadcast-feed" class="space-y-4"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+      function sanitise(s) { if(typeof s!=='string') return ''; return s.replace(/</g,'').replace(/>/g,'').replace(/"/g,'').replace(/'/g,'').replace(/\//g,'').replace(/\\/g,'').replace(/`/g,'').replace(/\$/g,'').replace(/&/g,'&amp;').replace(/alert/gi,'').replace(/onerror/gi,'').replace(/onload/gi,'').replace(/script/gi,'').replace(/javascript:/gi,'').trim(); }
+
+      const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
+      if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
+      if(role&&role!=='teacher'){ const map={student:'student.html',admin:'admin.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
+      const SESSION_TTL=60*60*1000;
+      if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
+
+      const safeUser=sanitise(username);
+      document.getElementById('sb-name').textContent=safeUser; document.getElementById('sb-avatar').textContent=safeUser.charAt(0).toUpperCase();
+
+      // ─── Existing Dashboard Data (unchanged) ───
+      // ... (all the existing data and functions for courses, attendance, marks, etc.) ...
+
+      // ─── Broadcast Functions ───
+      function loadTeacherBroadcasts() {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const feed = document.getElementById('teacher-broadcast-feed');
+          feed.innerHTML = '';
+          if (!data || data.length === 0) {
+            feed.innerHTML = '<p class="text-slate-400 text-sm">No broadcasts yet.</p>';
+            return;
+          }
+          // Decode token to get user ID
+          let userId = null;
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userId = payload.id;
+          } catch(e) { console.error('Could not decode token'); }
+          data.forEach(b => {
+            const sender = b.profiles ? b.profiles.full_name : 'Unknown';
+            const role = b.profiles ? b.profiles.role : 'user';
+            const senderId = b.profiles ? b.profiles.id : null;
+            let badge = '';
+            let actions = '';
+            if (role === 'admin') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full animate-pulse shadow-lg shadow-amber-400/50">Admin</span>';
+            } else if (role === 'teacher') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Teacher</span>';
+            }
+            // Teacher can edit/delete only own broadcasts
+            const isOwn = (senderId === userId && role === 'teacher');
+            if (isOwn) {
+              actions = `
+                <button class="edit-broadcast-btn text-indigo-600 hover:text-indigo-800 text-xs font-medium" data-id="${b.id}" data-msg="${sanitise(b.message)}" data-image="${b.image_url || ''}" data-type="${b.type}">Edit</button>
+                <button class="delete-broadcast-btn text-rose-600 hover:text-rose-800 text-xs font-medium ml-3" data-id="${b.id}">Delete</button>
+              `;
+            }
+            const imageHtml = b.type === 'image' && b.image_url ? `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` : '';
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200';
+            div.innerHTML = `
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="font-semibold text-slate-800">${sanitise(sender)}</span>
+                  ${badge}
+                  <span class="text-xs text-slate-400 ml-2">${new Date(b.sent_at).toLocaleString()}</span>
+                </div>
+                <div>${actions}</div>
+              </div>
+              <p class="text-slate-700 mt-1">${sanitise(b.message)}</p>
+              ${imageHtml}
+            `;
+            feed.appendChild(div);
+          });
+          // Attach edit/delete events
+          document.querySelectorAll('.edit-broadcast-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const id = this.dataset.id;
+              const msg = this.dataset.msg;
+              const image = this.dataset.image;
+              const type = this.dataset.type;
+              const newMsg = prompt('Edit message:', msg);
+              if (newMsg !== null) {
+                updateBroadcast(id, { message: newMsg, image_url: image, type: type });
+              }
+            });
+          });
+          document.querySelectorAll('.delete-broadcast-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              if (confirm('Delete this broadcast?')) {
+                deleteBroadcast(this.dataset.id);
+              }
+            });
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('teacher-broadcast-feed').innerHTML = '<p class="text-rose-500 text-sm">Failed to load broadcasts.</p>';
+        });
+      }
+
+      function createBroadcast(message, image_url, type) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ message, image_url, type })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast sent!');
+            loadTeacherBroadcasts();
+            // Clear form
+            document.getElementById('teacher-broadcast-msg').value = '';
+            document.getElementById('teacher-broadcast-image').value = '';
+          }
+        })
+        .catch(err => alert('Failed to send broadcast.'));
+      }
+
+      function updateBroadcast(id, updates) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch(`/api/broadcasts/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(updates)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast updated!');
+            loadTeacherBroadcasts();
+          }
+        })
+        .catch(err => alert('Failed to update broadcast.'));
+      }
+
+      function deleteBroadcast(id) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch(`/api/broadcasts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast deleted.');
+            loadTeacherBroadcasts();
+          }
+        })
+        .catch(err => alert('Failed to delete broadcast.'));
+      }
+
+      // Submit new broadcast
+      document.getElementById('teacher-broadcast-submit').addEventListener('click', function() {
+        const msg = document.getElementById('teacher-broadcast-msg').value.trim();
+        const image = document.getElementById('teacher-broadcast-image').value.trim();
+        const type = document.getElementById('teacher-broadcast-type').value;
+        if (!msg && !image) { alert('Please enter a message or image URL.'); return; }
+        createBroadcast(msg, image || null, type);
+      });
+
+      // ─── Navigation (overwrite switchPane to load broadcasts) ───
+      const paneMap = {
+        overview: { pane: 'pane-overview', title: 'Overview', sub: 'Faculty Management Console' },
+        attendance: { pane: 'pane-attendance', title: 'Mark Attendance', sub: 'Attendance Grid – Secure Submit' },
+        marks: { pane: 'pane-marks', title: 'Enter Marks', sub: 'Boundary Validated Marks Entry' },
+        courses: { pane: 'pane-courses', title: 'My Courses', sub: 'Access Controlled Course List' },
+        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
+      };
+      function switchPane(k) {
+        const d = paneMap[k];
+        if (!d) return;
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(d.pane).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        const btn = document.querySelector('[data-pane="'+k+'"]');
+        if (btn) btn.classList.add('active');
+        document.getElementById('page-title').textContent = d.title;
+        document.getElementById('page-sub').textContent = d.sub;
+        // Load broadcasts if pane is broadcasts
+        if (k === 'broadcasts') {
+          loadTeacherBroadcasts();
+        }
+      }
+      document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          switchPane(this.getAttribute('data-pane'));
+          document.getElementById('sidebar').classList.remove('open');
+          document.getElementById('sb-overlay').classList.add('hidden');
+        }, false);
+      });
+      document.getElementById('menu-btn').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sb-overlay').classList.remove('hidden');
+      }, false);
+      document.getElementById('sb-overlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sb-overlay').classList.add('hidden');
+      }, false);
+
+      // ─── Other functions (logout, timer, etc.) ───
+      function showToast(msg,type){ const el=document.getElementById('toast'); const cl={error:'bg-rose-600 text-white',success:'bg-emerald-600 text-white',info:'bg-indigo-600 text-white',warn:'bg-amber-500 text-white'}; el.className='toast '+(cl[type]||cl.info); el.textContent=msg; void el.offsetWidth; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4000); }
+      function secureLogout(reason){ sessionStorage.clear(); if(reason) alert('SECURITY: '+reason); window.location.replace('index.html'); }
+      document.getElementById('logout-btn').addEventListener('click', function(){ if(confirm('Log out securely?')) secureLogout(); });
+
+      (function timer(){ function upd(){ const el=Date.now()-loginTS, s=Math.floor(el/1000)%60, m=Math.floor(el/60000)%60, h=Math.floor(el/3600000); document.getElementById('session-timer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(el>SESSION_TTL) secureLogout('Session timed out.'); } upd(); setInterval(upd,1000); })();
+
+      window.addEventListener('pageshow', function(e){ if(e.persisted&&!sessionStorage.getItem('cms_token')) window.location.replace('index.html'); }, false);
+    })();
+  </script>
+</body>
+</html>

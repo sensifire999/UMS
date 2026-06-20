@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://* http://*; connect-src 'self';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Admin Command Center | UMS Laxman Nagar CMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
+  <style>
+    /* Same base styles as teacher.html, with admin-specific colors */
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    :root { --sw:260px; }
+    #sidebar { width:var(--sw); background:#fff; border-right:1px solid #e2e8f0; transition:transform .3s cubic-bezier(.4,0,.2,1); }
+    @media(max-width:1023px) { #sidebar { position:fixed; top:0; left:0; bottom:0; transform:translateX(-100%); z-index:50; box-shadow:4px 0 24px rgba(15,23,42,.12); } #sidebar.open { transform:translateX(0); } #sb-overlay { display:block; } }
+    #sb-overlay { display:none; }
+    .nav-link { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:#64748b; font-size:14px; font-weight:500; cursor:pointer; transition:background .15s,color .15s; border:none; background:none; width:100%; text-align:left; user-select:none; }
+    .nav-link:hover { background:#f1f5f9; color:#334155; }
+    .nav-link.active { background:#eef2ff; color:#4f46e5; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 2px 12px rgba(15,23,42,.05); }
+    #topbar { background:#fff; border-bottom:1px solid #e2e8f0; }
+    .pane { display:none; } .pane.active { display:block; }
+    th { color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:10px 16px; text-align:left; background:#f8fafc; white-space:nowrap; }
+    td { color:#334155; font-size:13px; padding:10px 16px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+    .btn-primary { background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer; transition:transform .15s,box-shadow .15s,opacity .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn-primary:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,.3); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-danger { background:linear-gradient(135deg,#dc2626,#ef4444); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:transform .15s,box-shadow .15s; }
+    .btn-danger:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 20px rgba(239,68,68,.3); }
+    .btn-outline { background:#fff; color:#4f46e5; border:1.5px solid #c7d2fe; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:7px; }
+    .btn-outline:hover { background:#eef2ff; }
+    .toast { position:fixed; top:18px; right:18px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; opacity:0; transform:translateX(50px); transition:opacity .3s,transform .3s; pointer-events:none; max-width:340px; box-shadow:0 8px 30px rgba(0,0,0,.12); }
+    .toast.show { opacity:1; transform:translateX(0); }
+    .drop-zone { border:2px dashed #c7d2fe; border-radius:14px; background:#f8fafc; transition:border-color .2s,background .2s; text-align:center; padding:40px 20px; cursor:pointer; }
+    .drop-zone.dragover { border-color:#4f46e5; background:#eef2ff; }
+    .drop-zone.accepted { border-color:#10b981; background:#f0fdf4; border-style:solid; }
+    .drop-zone.rejected { border-color:#ef4444; background:#fff5f5; border-style:solid; }
+    .log-row-block { background:#fff5f5; border-left:3px solid #ef4444; }
+    .log-row-warn { background:#fffbeb; border-left:3px solid #f59e0b; }
+    .log-row-ok { background:#f0fdf4; border-left:3px solid #10b981; }
+    .log-row-info { background:#eff6ff; border-left:3px solid #3b82f6; }
+    select.form-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; }
+    select.form-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+    input.form-inp { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; width:100%; transition:border-color .2s; }
+    input.form-inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); background:#fff; }
+    input.form-inp::placeholder { color:#94a3b8; }
+    .metric-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 2px 12px rgba(15,23,42,.05); }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spin { animation:spin .7s linear infinite; }
+    .payload-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#334155; max-height:180px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+    .prog-bar-bg { background:#e2e8f0; border-radius:999px; height:6px; overflow:hidden; }
+    .prog-bar { border-radius:999px; height:6px; transition:width .8s ease; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 flex overflow-hidden" style="height:100vh;">
+
+  <div id="toast" class="toast" role="alert"></div>
+  <div id="sb-overlay" class="fixed inset-0 bg-slate-900/40 z-40 hidden"></div>
+
+  <!-- Sidebar (similar to teacher but with admin role) -->
+  <aside id="sidebar" class="flex flex-col h-screen shrink-0">
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center shadow-sm">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+      </div>
+      <div><p class="text-slate-800 text-sm font-bold">UMS Laxman Nagar CMS</p><p class="text-rose-600 text-xs mono font-bold">Admin Command Center</p></div>
+    </div>
+    <div class="px-5 py-4 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center text-white font-bold text-sm" id="sb-avatar">–</div>
+        <div><p class="text-slate-800 text-sm font-semibold" id="sb-name">Loading…</p><span class="bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold px-2 py-0.5 rounded-full">Super Admin</span></div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <button class="nav-link active" data-pane="dashboard"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>System Dashboard</button>
+      <button class="nav-link" data-pane="upload"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Bulk CSV Upload</button>
+      <button class="nav-link" data-pane="roles"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Role Management</button>
+      <button class="nav-link" data-pane="security"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Security Logs</button>
+      <button class="nav-link" data-pane="users"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>User Management</button>
+      <!-- NEW: Broadcasts -->
+      <button class="nav-link" data-pane="broadcasts">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Broadcasts
+      </button>
+    </nav>
+    <div class="px-3 py-4 border-t border-slate-100">
+      <button id="logout-btn" class="nav-link text-rose-500 hover:bg-rose-50 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Secure Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <header id="topbar" class="flex items-center justify-between px-4 lg:px-6 py-3 shrink-0">
+      <div class="flex items-center gap-3">
+        <button id="menu-btn" class="lg:hidden text-slate-500 hover:text-slate-800 p-1.5 rounded-lg hover:bg-slate-100" aria-label="Menu"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div><h1 class="text-slate-800 font-bold text-base" id="page-title">System Dashboard</h1><p class="text-slate-400 text-xs" id="page-sub">Operational Health Overview</p></div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5"><span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span class="text-rose-700 text-xs mono font-bold">Super Admin</span></div>
+        <div class="text-slate-400 text-xs mono bg-slate-100 px-2.5 py-1 rounded-lg" id="session-timer">00:00:00</div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+      <!-- PANE: DASHBOARD (unchanged) -->
+      <div class="pane active" id="pane-dashboard">
+        <!-- ... same as before ... -->
+      </div>
+
+      <!-- PANE: UPLOAD (unchanged) -->
+      <div class="pane" id="pane-upload"> ... </div>
+
+      <!-- PANE: ROLES (unchanged) -->
+      <div class="pane" id="pane-roles"> ... </div>
+
+      <!-- PANE: SECURITY (unchanged) -->
+      <div class="pane" id="pane-security"> ... </div>
+
+      <!-- PANE: USERS (unchanged) -->
+      <div class="pane" id="pane-users"> ... </div>
+
+      <!-- PANE: BROADCASTS (New – similar to teacher but admin delete all) -->
+      <div class="pane" id="pane-broadcasts">
+        <div class="card p-6 mb-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">Create New Broadcast</h2>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Message</label>
+              <textarea id="admin-broadcast-msg" class="form-inp" rows="3" placeholder="Type your message..." maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Image URL (optional)</label>
+              <input type="url" id="admin-broadcast-image" class="form-inp" placeholder="https://example.com/image.jpg" />
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Type</label>
+              <select id="admin-broadcast-type" class="form-sel w-full">
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+            <button id="admin-broadcast-submit" class="btn-primary w-40">Send Broadcast</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">📢 All Broadcasts</h2>
+          <div id="admin-broadcast-feed" class="space-y-4"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+      function sanitise(s) { if(typeof s!=='string') return ''; return s.replace(/</g,'').replace(/>/g,'').replace(/"/g,'').replace(/'/g,'').replace(/\//g,'').replace(/\\/g,'').replace(/`/g,'').replace(/\$/g,'').replace(/&/g,'&amp;').replace(/alert/gi,'').replace(/onerror/gi,'').replace(/onload/gi,'').replace(/script/gi,'').replace(/javascript:/gi,'').trim(); }
+
+      const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
+      if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
+      if(role&&role!=='admin'){ const map={student:'student.html',teacher:'teacher.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
+      const SESSION_TTL=60*60*1000;
+      if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
+
+      const safeUser=sanitise(username);
+      document.getElementById('sb-name').textContent=safeUser; document.getElementById('sb-avatar').textContent=safeUser.charAt(0).toUpperCase();
+
+      // ─── Existing Dashboard Data (unchanged) ───
+      // ... (status items, activity, users, etc.) ...
+
+      // ─── Broadcast Functions ───
+      function loadAdminBroadcasts() {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const feed = document.getElementById('admin-broadcast-feed');
+          feed.innerHTML = '';
+          if (!data || data.length === 0) {
+            feed.innerHTML = '<p class="text-slate-400 text-sm">No broadcasts yet.</p>';
+            return;
+          }
+          data.forEach(b => {
+            const sender = b.profiles ? b.profiles.full_name : 'Unknown';
+            const role = b.profiles ? b.profiles.role : 'user';
+            let badge = '';
+            if (role === 'admin') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full animate-pulse shadow-lg shadow-amber-400/50">Admin</span>';
+            } else if (role === 'teacher') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Teacher</span>';
+            }
+            // Admin can delete any broadcast
+            const actions = `<button class="delete-broadcast-btn text-rose-600 hover:text-rose-800 text-xs font-medium" data-id="${b.id}">Delete</button>`;
+            const imageHtml = b.type === 'image' && b.image_url ? `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` : '';
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200';
+            div.innerHTML = `
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="font-semibold text-slate-800">${sanitise(sender)}</span>
+                  ${badge}
+                  <span class="text-xs text-slate-400 ml-2">${new Date(b.sent_at).toLocaleString()}</span>
+                </div>
+                <div>${actions}</div>
+              </div>
+              <p class="text-slate-700 mt-1">${sanitise(b.message)}</p>
+              ${imageHtml}
+            `;
+            feed.appendChild(div);
+          });
+          document.querySelectorAll('.delete-broadcast-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              if (confirm('Delete this broadcast?')) {
+                deleteBroadcastAdmin(this.dataset.id);
+              }
+            });
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('admin-broadcast-feed').innerHTML = '<p class="text-rose-500 text-sm">Failed to load broadcasts.</p>';
+        });
+      }
+
+      function createBroadcastAdmin(message, image_url, type) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ message, image_url, type })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast sent!');
+            loadAdminBroadcasts();
+            document.getElementById('admin-broadcast-msg').value = '';
+            document.getElementById('admin-broadcast-image').value = '';
+          }
+        })
+        .catch(err => alert('Failed to send broadcast.'));
+      }
+
+      function deleteBroadcastAdmin(id) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch(`/api/broadcasts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast deleted.');
+            loadAdminBroadcasts();
+          }
+        })
+        .catch(err => alert('Failed to delete broadcast.'));
+      }
+
+      document.getElementById('admin-broadcast-submit').addEventListener('click', function() {
+        const msg = document.getElementById('admin-broadcast-msg').value.trim();
+        const image = document.getElementById('admin-broadcast-image').value.trim();
+        const type = document.getElementById('admin-broadcast-type').value;
+        if (!msg && !image) { alert('Please enter a message or image URL.'); return; }
+        createBroadcastAdmin(msg, image || null, type);
+      });
+
+      // ─── Navigation (switchPane) ───
+      const paneMap = {
+        dashboard: { pane: 'pane-dashboard', title: 'System Dashboard', sub: 'Operational Health Overview' },
+        upload: { pane: 'pane-upload', title: 'Bulk CSV Upload', sub: 'Hardened File Validation & Upload' },
+        roles: { pane: 'pane-roles', title: 'Role Management', sub: 'Privilege Isolation Control' },
+        security: { pane: 'pane-security', title: 'Security Logs', sub: 'Live Threat Intelligence Feed' },
+        users: { pane: 'pane-users', title: 'User Management', sub: '5,000+ Record Registry' },
+        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
+      };
+      function switchPane(k) {
+        const d = paneMap[k];
+        if (!d) return;
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(d.pane).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        const btn = document.querySelector('[data-pane="'+k+'"]');
+        if (btn) btn.classList.add('active');
+        document.getElementById('page-title').textContent = d.title;
+        document.getElementById('page-sub').textContent = d.sub;
+        if (k === 'broadcasts') {
+          loadAdminBroadcasts();
+        }
+      }
+      document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          switchPane(this.getAttribute('data-pane'));
+          document.getElementById('sidebar').classList.remove('open');
+          document.getElementById('sb-overlay').classList.add('hidden');
+        }, false);
+      });
+      document.getElementById('menu-btn').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sb-overlay').classList.remove('hidden');
+      }, false);
+      document.getElementById('sb-overlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sb-overlay').classList.add('hidden');
+      }, false);
+
+      // ─── Other functions ───
+      function showToast(msg,type){ const el=document.getElementById('toast'); const cl={error:'bg-rose-600 text-white',success:'bg-emerald-600 text-white',info:'bg-indigo-600 text-white',warn:'bg-amber-500 text-white'}; el.className='toast '+(cl[type]||cl.info); el.textContent=msg; void el.offsetWidth; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4200); }
+      function secureLogout(reason){ sessionStorage.clear(); if(reason) alert('SECURITY: '+reason); window.location.replace('index.html'); }
+      document.getElementById('logout-btn').addEventListener('click', function(){ if(confirm('Log out securely?')) secureLogout(); });
+
+      (function timer(){ function upd(){ const el=Date.now()-loginTS, s=Math.floor(el/1000)%60, m=Math.floor(el/60000)%60, h=Math.floor(el/3600000); document.getElementById('session-timer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(el>SESSION_TTL) secureLogout('Session timed out.'); } upd(); setInterval(upd,1000); })();
+
+      window.addEventListener('pageshow', function(e){ if(e.persisted&&!sessionStorage.getItem('cms_token')) window.location.replace('index.html'); }, false);
+    })();
+  </script>
+</body>
+</html>
