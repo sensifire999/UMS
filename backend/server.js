@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
 
 // ─── Security Middleware ───
 app.use(helmet({
@@ -36,21 +36,8 @@ app.use(helmet({
   }
 }));
 
-// ─── FIX 1: CORS — same-origin Render pe sab allow ───
 app.use(cors({
-  origin: function(origin, callback) {
-    // Same-origin requests (Render pe frontend + backend ek hi server pe hai)
-    if (!origin) return callback(null, true);
-    // localhost development bhi allow karo
-    if (origin.includes('localhost') || origin.includes('onrender.com')) {
-      return callback(null, true);
-    }
-    // Custom domain support via env variable
-    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
-      return callback(null, true);
-    }
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: ['http://localhost:3000', 'http://localhost:5500'],
   credentials: true
 }));
 
@@ -143,31 +130,17 @@ function protectStatic(req, res, next) {
   next();
 }
 
-// ─── FIX 2: Static Path — server.js backend/ mein hai, public/ uske bahar hai ───
-// Render path: /opt/render/project/src/backend/server.js
-// Public path: /opt/render/project/src/public/
-const publicPath = process.env.PUBLIC_PATH
-  ? path.resolve(process.env.PUBLIC_PATH)
-  : path.join(__dirname, '..', 'public'); // backend/ se ek upar jaao, phir public/
-
+// ─── Serve Static Files ───
+const publicPath = path.join(__dirname, '../public');
 app.use(protectStatic);
 app.use(express.static(publicPath));
 
-// ─── Root route ───
 app.get('/', (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // ─── CAPTCHA Store ───
 const captchaStore = new Map();
-
-// CAPTCHA cleanup — expire hue entries har 10 min mein delete karo
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, data] of captchaStore.entries()) {
-    if (data.expires < now) captchaStore.delete(id);
-  }
-}, 600000);
 
 function sanitise(str) {
   if (typeof str !== 'string') return '';
@@ -190,8 +163,7 @@ app.get('/api/auth/captcha', (req, res) => {
   }
   const question = `What is ${a} ${op} ${b} ?`;
   const id = crypto.randomBytes(16).toString('hex');
-  // answer Number ke roop mein store karo
-  captchaStore.set(id, { answer: Number(answer), expires: Date.now() + 300000 });
+  captchaStore.set(id, { answer, expires: Date.now() + 300000 });
   res.json({ id, question });
 });
 
@@ -200,57 +172,42 @@ app.post('/api/auth/login', [
   body('username').isLength({ min: 3 }).trim().escape(),
   body('password').isLength({ min: 8 }),
   body('role').isIn(['student', 'teacher', 'admin']),
-  // FIX 3: .toInt() add kiya — string "5" ko number 5 mein convert karo
-  body('captcha_answer').isInt().toInt(),
+  body('captcha_answer').isInt(),
   body('captcha_id').notEmpty(),
   body('device_fingerprint').optional().isString()
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.error('Validation errors:', JSON.stringify(errors.array()));
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
 
   const { username, password, role, captcha_answer, captcha_id, device_fingerprint } = req.body;
 
   if (!captchaStore.has(captcha_id)) {
-    return res.status(400).json({ message: 'CAPTCHA expired or invalid. Please refresh.' });
+    return res.status(400).json({ message: 'CAPTCHA expired or invalid' });
   }
   const captcha = captchaStore.get(captcha_id);
-
-  // FIX 3 cont: parseInt se ensure karo dono Number hain comparison ke time
-  if (Number(captcha.answer) !== parseInt(captcha_answer, 10)) {
-    captchaStore.delete(captcha_id); // ek baar use, phir delete
-    return res.status(400).json({ message: 'Incorrect CAPTCHA answer.' });
+  if (captcha.answer !== captcha_answer) {
+    return res.status(400).json({ message: 'Incorrect CAPTCHA' });
   }
   captchaStore.delete(captcha_id);
 
-  // FIX 4: Username mein email nahi, sirf username — server khud email banata hai
-  // Agar user galti se poora email type kar de toh handle karo
-  let cleanUsername = username;
-  if (cleanUsername.includes('@')) {
-    cleanUsername = cleanUsername.split('@')[0];
-  }
-
-  const email = `${cleanUsername}@umslaxmannagar.edu`;
-  console.log(`[LOGIN] Attempting login for: ${email}, role: ${role}`);
-
+  const email = `${username}@umslaxmannagar.edu`;
   try {
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     if (authError) {
-      console.error('[LOGIN] Supabase auth error:', authError.message);
       await supabaseAdmin.from('security_logs').insert({
         ip_address: req.ip,
         user_agent: req.headers['user-agent'],
         event_type: 'FAILED_LOGIN',
         browser_fingerprint: device_fingerprint,
-        details: { username: cleanUsername, role, error: authError.message },
+        details: { username, role },
         severity: 'WARN'
       });
-      return res.status(401).json({ message: 'Invalid credentials. Check username and password.' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const { data: profile, error: profError } = await supabaseAdmin
@@ -258,25 +215,12 @@ app.post('/api/auth/login', [
       .select('id, full_name, role')
       .eq('id', authData.user.id)
       .single();
-
-    if (profError) {
-      console.error('[LOGIN] Profile fetch error:', profError.message);
-      return res.status(500).json({ message: 'Could not fetch user profile.' });
+    if (profError || !profile || profile.role !== role) {
+      return res.status(401).json({ message: 'Role mismatch' });
     }
 
-    if (!profile) {
-      console.error('[LOGIN] Profile not found for user:', authData.user.id);
-      return res.status(401).json({ message: 'User profile not found. Contact admin.' });
-    }
+    const token = generateToken({ id: profile.id, username, role: profile.role });
 
-    if (profile.role !== role) {
-      console.error(`[LOGIN] Role mismatch: DB role=${profile.role}, requested role=${role}`);
-      return res.status(401).json({ message: `Role mismatch. Your account role is: ${profile.role}` });
-    }
-
-    const token = generateToken({ id: profile.id, username: cleanUsername, role: profile.role });
-
-    // FIX 5: Cookie sameSite — Render (HTTPS) pe 'none' nahi, 'strict' theek hai
     res.cookie('cms_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -293,11 +237,10 @@ app.post('/api/auth/login', [
       severity: 'OK'
     });
 
-    console.log(`[LOGIN] Success: ${email}, role: ${profile.role}`);
-    res.json({ token, role: profile.role, username: cleanUsername, full_name: profile.full_name });
+    res.json({ token, role: profile.role, username, full_name: profile.full_name });
   } catch (err) {
-    console.error('[LOGIN] Unexpected error:', err);
-    res.status(500).json({ message: 'Internal server error. Try again.' });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -317,7 +260,7 @@ app.get('/api/student/dashboard', verifyTokenAPI, requireRole('student'), async 
       .from('enrollments')
       .select(`
         id,
-        courses(code, title, credits),
+        subjects(code, name, class),
         attendance(present, date),
         marks(exam_type, internal_marks, external_marks, total_marks)
       `)
@@ -333,22 +276,17 @@ app.get('/api/student/dashboard', verifyTokenAPI, requireRole('student'), async 
       }
     });
     const attendancePct = total ? Math.round((present / total) * 100) : 0;
-    let totalCredits = 0, totalPoints = 0;
+    let totalMarks = 0, totalMax = 0;
     enrollments.forEach(enr => {
       if (enr.marks && enr.marks.length) {
         const mark = enr.marks[enr.marks.length - 1];
         if (mark) {
-          const gradePoints = mark.total_marks >= 90 ? 10 :
-                              mark.total_marks >= 80 ? 9 :
-                              mark.total_marks >= 70 ? 8 :
-                              mark.total_marks >= 60 ? 7 :
-                              mark.total_marks >= 50 ? 6 : 5;
-          totalPoints += gradePoints * enr.courses.credits;
-          totalCredits += enr.courses.credits;
+          totalMarks += mark.total_marks || 0;
+          totalMax += 100;
         }
       }
     });
-    const sgpa = totalCredits ? (totalPoints / totalCredits).toFixed(2) : '0.00';
+    const overallPct = totalMax ? Math.round((totalMarks / totalMax) * 100) : 0;
     const { data: logs } = await supabaseAdmin
       .from('security_logs')
       .select('created_at, event_type, ip_address')
@@ -359,7 +297,7 @@ app.get('/api/student/dashboard', verifyTokenAPI, requireRole('student'), async 
       profile,
       enrollments,
       attendance: { total, present, percentage: attendancePct },
-      sgpa,
+      overall_percentage: overallPct,
       security_logs: logs || []
     });
   } catch (err) {
@@ -370,7 +308,7 @@ app.get('/api/student/dashboard', verifyTokenAPI, requireRole('student'), async 
 
 // ─── 4. Update Attendance ───
 app.post('/api/admin/update-attendance', verifyTokenAPI, requireRole('teacher'), [
-  body('course_code').notEmpty(),
+  body('subject_code').notEmpty(),
   body('date').isISO8601(),
   body('records').isArray(),
   body('records.*.roll').notEmpty(),
@@ -380,24 +318,28 @@ app.post('/api/admin/update-attendance', verifyTokenAPI, requireRole('teacher'),
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { course_code, date, records } = req.body;
+
+  const { subject_code, date, records } = req.body;
   const teacherId = req.user.id;
+
   try {
-    const { data: course, error: cErr } = await supabaseAdmin
-      .from('courses')
+    const { data: subject, error: sErr } = await supabaseAdmin
+      .from('subjects')
       .select('id')
-      .eq('code', course_code)
+      .eq('code', subject_code)
       .single();
-    if (cErr || !course) return res.status(400).json({ message: 'Course not found' });
+    if (sErr || !subject) return res.status(400).json({ message: 'Subject not found' });
+
     const { data: assign, error: aErr } = await supabaseAdmin
-      .from('course_assignments')
+      .from('subject_assignments')
       .select('id')
       .eq('teacher_id', teacherId)
-      .eq('course_id', course.id)
+      .eq('subject_id', subject.id)
       .single();
     if (aErr || !assign) {
-      return res.status(403).json({ message: 'Not assigned to this course' });
+      return res.status(403).json({ message: 'Not assigned to this subject' });
     }
+
     for (const rec of records) {
       const { data: student } = await supabaseAdmin
         .from('students_data')
@@ -405,13 +347,15 @@ app.post('/api/admin/update-attendance', verifyTokenAPI, requireRole('teacher'),
         .eq('roll_no', rec.roll)
         .single();
       if (!student) continue;
+
       const { data: enrollment } = await supabaseAdmin
         .from('enrollments')
         .select('id')
         .eq('student_id', student.id)
-        .eq('course_id', course.id)
+        .eq('subject_id', subject.id)
         .single();
       if (!enrollment) continue;
+
       await supabaseAdmin
         .from('attendance')
         .upsert({
@@ -421,14 +365,16 @@ app.post('/api/admin/update-attendance', verifyTokenAPI, requireRole('teacher'),
           marked_by: teacherId
         }, { onConflict: 'enrollment_id,date' });
     }
+
     await supabaseAdmin.from('security_logs').insert({
       user_id: teacherId,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
       event_type: 'ATTENDANCE_UPDATED',
-      details: { course: course_code, records: records.length, date },
+      details: { subject: subject_code, records: records.length, date },
       severity: 'OK'
     });
+
     res.json({ message: 'Attendance updated' });
   } catch (err) {
     console.error('Attendance error:', err);
@@ -438,7 +384,7 @@ app.post('/api/admin/update-attendance', verifyTokenAPI, requireRole('teacher'),
 
 // ─── 5. Modify Grades ───
 app.put('/api/teacher/modify-grades', verifyTokenAPI, requireRole('teacher'), [
-  body('course_code').notEmpty(),
+  body('subject_code').notEmpty(),
   body('exam_type').isIn(['internal', 'midterm', 'final']),
   body('grades').isArray(),
   body('grades.*.roll').notEmpty(),
@@ -449,15 +395,18 @@ app.put('/api/teacher/modify-grades', verifyTokenAPI, requireRole('teacher'), [
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { course_code, exam_type, grades } = req.body;
+
+  const { subject_code, exam_type, grades } = req.body;
   const teacherId = req.user.id;
+
   try {
-    const { data: course } = await supabaseAdmin
-      .from('courses')
+    const { data: subject } = await supabaseAdmin
+      .from('subjects')
       .select('id')
-      .eq('code', course_code)
+      .eq('code', subject_code)
       .single();
-    if (!course) return res.status(400).json({ message: 'Course not found' });
+    if (!subject) return res.status(400).json({ message: 'Subject not found' });
+
     for (const g of grades) {
       const { data: student } = await supabaseAdmin
         .from('students_data')
@@ -465,13 +414,15 @@ app.put('/api/teacher/modify-grades', verifyTokenAPI, requireRole('teacher'), [
         .eq('roll_no', g.roll)
         .single();
       if (!student) continue;
+
       const { data: enrollment } = await supabaseAdmin
         .from('enrollments')
         .select('id')
         .eq('student_id', student.id)
-        .eq('course_id', course.id)
+        .eq('subject_id', subject.id)
         .single();
       if (!enrollment) continue;
+
       await supabaseAdmin
         .from('marks')
         .upsert({
@@ -482,14 +433,16 @@ app.put('/api/teacher/modify-grades', verifyTokenAPI, requireRole('teacher'), [
           marked_by: teacherId
         }, { onConflict: 'enrollment_id,exam_type' });
     }
+
     await supabaseAdmin.from('security_logs').insert({
       user_id: teacherId,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
       event_type: 'GRADES_UPDATED',
-      details: { course: course_code, exam_type, count: grades.length },
+      details: { subject: subject_code, exam_type, count: grades.length },
       severity: 'OK'
     });
+
     res.json({ message: 'Grades updated' });
   } catch (err) {
     console.error('Grades error:', err);
@@ -503,19 +456,23 @@ app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
+
   const ext = path.extname(req.file.originalname).toLowerCase();
   if (ext !== '.csv') {
     return res.status(400).json({ message: 'Only CSV files allowed' });
   }
+
   const fileBuffer = req.file.buffer;
   const header = fileBuffer.slice(0, 4096).toString('utf-8');
   const suspicious = /[<>"';(){}\[\]\\\/\|&$`!@#%\^=*]/;
   if (suspicious.test(header)) {
     return res.status(400).json({ message: 'Suspicious characters in CSV header' });
   }
+
   const results = [];
   const stream = Readable.from(fileBuffer.toString('utf-8'));
   let rowCount = 0;
+
   stream
     .pipe(csv())
     .on('data', (data) => {
@@ -531,11 +488,17 @@ app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.
       let inserted = 0;
       for (let i = 0; i < results.length; i += chunkSize) {
         const chunk = results.slice(i, i + chunkSize);
-        const toInsert = chunk.map(r => ({
-          roll_no: r.roll_no,
-          branch: r.branch || 'CSE',
-          semester: parseInt(r.semester) || 1,
-        }));
+        const toInsert = chunk.map(r => {
+          const cls = parseInt(r.class, 10);
+          if (isNaN(cls) || cls < 9 || cls > 12) {
+            throw new Error(`Invalid class: ${r.class}. Must be between 9 and 12.`);
+          }
+          return {
+            roll_no: r.roll_no,
+            class: cls,
+            section: r.section || '',
+          };
+        });
         const { error } = await supabaseAdmin
           .from('students_data')
           .upsert(toInsert, { onConflict: 'roll_no' });
@@ -551,6 +514,7 @@ app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.
         }
         inserted += toInsert.length;
       }
+
       await supabaseAdmin.from('upload_logs').insert({
         filename: req.file.originalname,
         filesize: req.file.size,
@@ -558,6 +522,7 @@ app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.
         status: 'SUCCESS',
         details: { rows_inserted: inserted }
       });
+
       await supabaseAdmin.from('security_logs').insert({
         user_id: req.user.id,
         ip_address: req.ip,
@@ -566,6 +531,7 @@ app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.
         details: { filename: req.file.originalname, rows: inserted },
         severity: 'OK'
       });
+
       res.json({ message: `Uploaded ${inserted} records` });
     })
     .on('error', (err) => {
@@ -609,8 +575,10 @@ app.post('/api/broadcasts', verifyTokenAPI, [
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
+
   const { message, image_url, type } = req.body;
   const senderId = req.user.id;
+
   try {
     const { data, error } = await supabaseAdmin
       .from('broadcasts')
@@ -623,6 +591,7 @@ app.post('/api/broadcasts', verifyTokenAPI, [
       .select()
       .single();
     if (error) throw error;
+
     await supabaseAdmin.from('security_logs').insert({
       user_id: senderId,
       ip_address: req.ip,
@@ -631,6 +600,7 @@ app.post('/api/broadcasts', verifyTokenAPI, [
       details: { type, id: data.id },
       severity: 'INFO'
     });
+
     res.json({ message: 'Broadcast created', broadcast: data });
   } catch (err) {
     console.error('Create broadcast error:', err);
@@ -734,8 +704,10 @@ app.post('/api/admin/change-role', verifyTokenAPI, requireRole('admin'), [
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
+
   const { user_id, current_role, new_role, reason } = req.body;
   const adminId = req.user.id;
+
   try {
     let target;
     if (user_id.includes('@') || user_id.includes(' ')) {
@@ -756,11 +728,13 @@ app.post('/api/admin/change-role', verifyTokenAPI, requireRole('admin'), [
     if (!target || target.role !== current_role) {
       return res.status(400).json({ message: 'User not found or role mismatch' });
     }
+
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({ role: new_role, updated_at: new Date() })
       .eq('id', target.id);
     if (error) throw error;
+
     await supabaseAdmin.from('role_audit').insert({
       target_user_id: target.id,
       old_role: current_role,
@@ -768,6 +742,7 @@ app.post('/api/admin/change-role', verifyTokenAPI, requireRole('admin'), [
       changed_by: adminId,
       reason: reason
     });
+
     await supabaseAdmin.from('security_logs').insert({
       user_id: adminId,
       ip_address: req.ip,
@@ -776,6 +751,7 @@ app.post('/api/admin/change-role', verifyTokenAPI, requireRole('admin'), [
       details: { target: target.id, old: current_role, new: new_role, reason },
       severity: new_role === 'admin' ? 'BLOCK' : 'OK'
     });
+
     res.json({ message: 'Role updated' });
   } catch (err) {
     console.error('Role change error:', err);
@@ -799,27 +775,87 @@ app.get('/api/admin/security-logs', verifyTokenAPI, requireRole('admin'), async 
   }
 });
 
-// ─── 10. Admin: List Users (powers Dashboard counts + User Management pane) ───
-app.get('/api/admin/users', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+// ─── 10. Admin Create User ───
+app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }),
+  body('full_name').notEmpty().trim().escape(),
+  body('role').isIn(['student', 'teacher', 'admin']),
+  body('class').optional().isInt({ min: 9, max: 12 }),
+  body('section').optional().isString().trim().escape(),
+  body('roll_no').optional().isString().trim().escape(),
+  body('employee_id').optional().isString().trim().escape(),
+  body('department').optional().isString().trim().escape()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  }
+
+  const { email, password, full_name, role, class: cls, section, roll_no, employee_id, department } = req.body;
+
   try {
-    const { role, search } = req.query;
-    let query = supabaseAdmin
+    // 1. Create user in Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name }
+    });
+    if (authError) {
+      return res.status(400).json({ message: authError.message });
+    }
+
+    const userId = authData.user.id;
+
+    // 2. Insert profile
+    const { error: profError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, role, created_at')
-      .order('created_at', { ascending: false })
-      .limit(500);
-    if (role && ['student', 'teacher', 'admin'].includes(role)) {
-      query = query.eq('role', role);
+      .insert({
+        id: userId,
+        full_name: full_name,
+        role: role,
+        status: 'active'
+      });
+    if (profError) {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      return res.status(400).json({ message: profError.message });
     }
-    if (search && typeof search === 'string') {
-      query = query.ilike('full_name', `%${search}%`);
+
+    // 3. Insert student or teacher specific data
+    if (role === 'student') {
+      const { error: studError } = await supabaseAdmin
+        .from('students_data')
+        .insert({
+          profile_id: userId,
+          roll_no: roll_no || `UMS/${Date.now().toString(36).toUpperCase()}`,
+          class: cls || 9,
+          section: section || 'A'
+        });
+      if (studError) {
+        await supabaseAdmin.from('profiles').delete().eq('id', userId);
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return res.status(400).json({ message: studError.message });
+      }
+    } else if (role === 'teacher') {
+      // You can add a teachers_data table if needed – for now just profiles
+      // Optionally, we can insert into a teachers table later
     }
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json(data);
+
+    // Log
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      event_type: 'USER_CREATED',
+      details: { email, role, created_by: req.user.id },
+      severity: 'OK'
+    });
+
+    res.json({ message: 'User created successfully', user_id: userId, email, role });
   } catch (err) {
-    console.error('Users list error:', err);
-    res.status(500).json({ message: 'Internal error' });
+    console.error('Create user error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -837,12 +873,13 @@ app.use((req, res) => {
         body { font-family: 'Inter', sans-serif; background: #7f1d1d; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
         .card { background: #991b1b; border: 2px solid #fca5a5; border-radius: 20px; padding: 60px 48px; text-align: center; max-width: 520px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; overflow: hidden; }
         .card::before { content: '⚠'; position: absolute; top: -30px; right: -30px; font-size: 120px; opacity: 0.1; transform: rotate(20deg); }
-        h1 { font-size: 80px; font-weight: 800; color: #fca5a5; margin: 0; line-height: 1; }
+        h1 { font-size: 80px; font-weight: 800; color: #fca5a5; margin: 0; line-height: 1; text-shadow: 0 4px 20px rgba(252, 165, 165, 0.3); }
         .sub { font-size: 22px; font-weight: 600; color: #fecaca; margin: 16px 0 8px; }
         .desc { color: #fca5a5; font-size: 15px; margin: 8px 0 24px; opacity: 0.9; }
-        a { display: inline-block; background: #fca5a5; color: #7f1d1d; font-weight: 700; padding: 12px 28px; border-radius: 50px; text-decoration: none; }
-        .security-badge { margin-top: 24px; font-size: 12px; color: #fca5a5; opacity: 0.6; }
-        .security-badge span { display: inline-block; background: rgba(252,165,165,0.15); padding: 4px 14px; border-radius: 30px; border: 1px solid rgba(252,165,165,0.2); }
+        a { display: inline-block; background: #fca5a5; color: #7f1d1d; font-weight: 700; padding: 12px 28px; border-radius: 50px; text-decoration: none; transition: background 0.2s, transform 0.1s; box-shadow: 0 4px 12px rgba(252, 165, 165, 0.4); }
+        a:hover { background: #fecaca; transform: translateY(-2px); }
+        .security-badge { margin-top: 24px; font-size: 12px; color: #fca5a5; opacity: 0.6; letter-spacing: 1px; }
+        .security-badge span { display: inline-block; background: rgba(252, 165, 165, 0.15); padding: 4px 14px; border-radius: 30px; border: 1px solid rgba(252, 165, 165, 0.2); }
       </style>
     </head>
     <body>
@@ -868,7 +905,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`UMS Laxman Nagar CMS server running on port ${PORT}`);
-  console.log(`Public path: ${publicPath}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`UMS Laxman Nagar CMS (School Edition: Classes 9-12) running on port ${PORT}`);
 });
