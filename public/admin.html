@@ -11,7 +11,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
   <style>
-    /* ... same as before ... */
+    /* Same base styles as teacher.html, with admin-specific colors */
     * { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
     .mono { font-family: 'JetBrains Mono', monospace; }
@@ -64,7 +64,7 @@
   <div id="toast" class="toast" role="alert"></div>
   <div id="sb-overlay" class="fixed inset-0 bg-slate-900/40 z-40 hidden"></div>
 
-  <!-- Sidebar -->
+  <!-- Sidebar (similar to teacher but with admin role) -->
   <aside id="sidebar" class="flex flex-col h-screen shrink-0">
     <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-100">
       <div class="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center shadow-sm">
@@ -81,10 +81,15 @@
     <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
       <button class="nav-link active" data-pane="dashboard"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>System Dashboard</button>
       <button class="nav-link" data-pane="upload"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>Bulk CSV Upload</button>
-      <button class="nav-link" data-pane="create"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>Create Account</button>
       <button class="nav-link" data-pane="roles"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Role Management</button>
       <button class="nav-link" data-pane="security"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Security Logs</button>
+      <button class="nav-link" data-pane="adduser"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>Add Student / Teacher</button>
       <button class="nav-link" data-pane="users"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>User Management</button>
+      <!-- NEW: Broadcasts -->
+      <button class="nav-link" data-pane="broadcasts">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        Broadcasts
+      </button>
     </nav>
     <div class="px-3 py-4 border-t border-slate-100">
       <button id="logout-btn" class="nav-link text-rose-500 hover:bg-rose-50 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Secure Logout</button>
@@ -105,113 +110,218 @@
     </header>
 
     <main class="flex-1 overflow-y-auto p-4 lg:p-6">
-
-      <!-- PANE: DASHBOARD (unchanged) -->
+      <!-- PANE: DASHBOARD -->
       <div class="pane active" id="pane-dashboard">
-        <!-- System Health Metrics -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-          <div class="metric-card p-4 xl:col-span-2"><div class="flex items-center justify-between mb-3"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Total Records</p><div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center"><svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div></div><p class="text-3xl font-extrabold text-slate-800" id="metric-records">5,000+</p><div class="mt-2 prog-bar-bg"><div class="prog-bar" style="width:100%;background:#6366f1;"></div></div><p class="text-xs text-indigo-600 font-semibold mt-1">Full Capacity</p></div>
-          <div class="metric-card p-4"><div class="flex items-center justify-between mb-3"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Active Sessions</p><div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center"><svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6A11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div></div><p class="text-3xl font-extrabold text-emerald-600" id="metric-sessions">247</p><p class="text-xs text-slate-400 mt-1">Validated sessions</p></div>
-          <div class="metric-card p-4"><div class="flex items-center justify-between mb-3"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Blocked IPs</p><div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center"><svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg></div></div><p class="text-3xl font-extrabold text-rose-600" id="metric-blocked">18</p><p class="text-xs text-slate-400 mt-1">Attack IPs blocked</p></div>
-          <div class="metric-card p-4"><div class="flex items-center justify-between mb-3"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide">Failed Logins</p><div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div></div><p class="text-3xl font-extrabold text-amber-600">63</p><p class="text-xs text-slate-400 mt-1">Last 24 hours</p></div>
-          <div class="metric-card p-4"><div class="flex items-center justify-between mb-3"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide">DB Load</p><div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center"><svg class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg></div></div><p class="text-3xl font-extrabold text-violet-600">34%</p><div class="mt-2 prog-bar-bg"><div class="prog-bar" style="width:34%;background:#7c3aed;"></div></div></div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="metric-card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Students</p><p class="text-2xl font-extrabold text-indigo-600" id="metric-students">–</p><p class="text-xs text-slate-400 mt-0.5">Active enrolled accounts</p></div>
+          <div class="metric-card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Teachers</p><p class="text-2xl font-extrabold text-violet-600" id="metric-teachers">–</p><p class="text-xs text-slate-400 mt-0.5">Faculty accounts</p></div>
+          <div class="metric-card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Admins</p><p class="text-2xl font-extrabold text-rose-600" id="metric-admins">–</p><p class="text-xs text-slate-400 mt-0.5">Super Admin accounts</p></div>
+          <div class="metric-card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Security Events (24h)</p><p class="text-2xl font-extrabold text-amber-500" id="metric-events">–</p><p class="text-xs text-slate-400 mt-0.5">Logged in last 24 hours</p></div>
         </div>
-        <!-- Status & Activity (unchanged) -->
-        <div class="grid lg:grid-cols-2 gap-5">
-          <div class="card p-5"><h2 class="text-slate-800 font-bold text-sm mb-4">System Component Status</h2><div class="space-y-3" id="status-list"></div></div>
-          <div class="card overflow-hidden"><div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">Recent Admin Activity</h2></div><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Time</th><th>Admin</th><th>Action</th><th class="text-center">Status</th></tr></thead><tbody id="activity-tbody"></tbody></table></div></div>
-        </div>
-      </div>
-
-      <!-- PANE: UPLOAD (unchanged) -->
-      <div class="pane" id="pane-upload">
-        <!-- ... (same as previous) ... -->
-        <!-- Keep your existing upload pane -->
-      </div>
-
-      <!-- PANE: CREATE ACCOUNT (NEW) -->
-      <div class="pane" id="pane-create">
-        <div class="card p-6 max-w-2xl mx-auto">
-          <h2 class="text-slate-800 font-bold text-lg mb-4 flex items-center gap-2">
-            <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-            Create New Account
-          </h2>
-          <p class="text-slate-500 text-sm mb-6">Create student or teacher accounts. All fields are validated and logged.</p>
-          <form id="create-user-form" class="space-y-4" novalidate>
-            <!-- Full Name -->
-            <div>
-              <label class="block text-slate-700 text-sm font-semibold mb-1">Full Name</label>
-              <input type="text" id="create-fullname" class="form-inp" placeholder="e.g., Rahul Kumar" required />
+        <div class="grid lg:grid-cols-3 gap-5">
+          <div class="card p-5 lg:col-span-1">
+            <h2 class="text-slate-800 font-bold text-sm mb-4">System Status</h2>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between"><span class="text-slate-600 text-sm">API Server</span><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-full">Online</span></div>
+              <div class="flex items-center justify-between"><span class="text-slate-600 text-sm">Database (Supabase)</span><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-full">Connected</span></div>
+              <div class="flex items-center justify-between"><span class="text-slate-600 text-sm">Auth Provider</span><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-full">Operational</span></div>
+              <div class="flex items-center justify-between"><span class="text-slate-600 text-sm">Rate Limiter</span><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-full">Active</span></div>
             </div>
-            <!-- Email -->
-            <div>
-              <label class="block text-slate-700 text-sm font-semibold mb-1">Email</label>
-              <input type="email" id="create-email" class="form-inp" placeholder="e.g., rahul@umslaxmannagar.edu" required />
-              <p class="text-xs text-slate-400 mt-1">Used as login username (only the part before @ will be used).</p>
+          </div>
+          <div class="card overflow-hidden lg:col-span-2">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 class="text-slate-800 font-bold text-sm">Recent Activity</h2>
+              <button id="dashboard-refresh-btn" class="btn-outline" style="padding:6px 14px;font-size:12px;">Refresh</button>
             </div>
-            <!-- Password -->
-            <div>
-              <label class="block text-slate-700 text-sm font-semibold mb-1">Password</label>
-              <input type="password" id="create-password" class="form-inp" placeholder="Min 8 characters" minlength="8" required />
-            </div>
-            <!-- Role -->
-            <div>
-              <label class="block text-slate-700 text-sm font-semibold mb-1">Role</label>
-              <select id="create-role" class="form-sel w-full" required>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-                <option value="admin">Administrator</option>
-              </select>
-            </div>
-            <!-- Dynamic fields for student -->
-            <div id="student-fields" class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-slate-600 text-xs font-semibold mb-1">Class (9–12)</label>
-                  <input type="number" id="create-class" class="form-inp" placeholder="9" min="9" max="12" />
-                </div>
-                <div>
-                  <label class="block text-slate-600 text-xs font-semibold mb-1">Section</label>
-                  <input type="text" id="create-section" class="form-inp" placeholder="A" maxlength="1" />
-                </div>
-              </div>
-              <div>
-                <label class="block text-slate-600 text-xs font-semibold mb-1">Roll Number (optional)</label>
-                <input type="text" id="create-roll" class="form-inp" placeholder="Auto-generated if left blank" />
-              </div>
-            </div>
-            <!-- Dynamic fields for teacher -->
-            <div id="teacher-fields" class="space-y-4 hidden">
-              <div>
-                <label class="block text-slate-600 text-xs font-semibold mb-1">Employee ID (optional)</label>
-                <input type="text" id="create-employee-id" class="form-inp" placeholder="e.g., TCH-001" />
-              </div>
-              <div>
-                <label class="block text-slate-600 text-xs font-semibold mb-1">Department</label>
-                <input type="text" id="create-department" class="form-inp" placeholder="e.g., Science, Mathematics" />
-              </div>
-            </div>
-            <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-              Create Account
-            </button>
-          </form>
-          <div id="create-result" class="mt-4 hidden">
-            <div class="rounded-lg p-4 border" id="create-result-box">
-              <p id="create-result-msg" class="text-sm font-medium"></p>
-            </div>
+            <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Time</th><th>Event</th><th>Severity</th><th>IP Address</th></tr></thead><tbody id="dashboard-activity-tbody"></tbody></table></div>
           </div>
         </div>
       </div>
 
-      <!-- PANE: ROLES (unchanged) -->
-      <div class="pane" id="pane-roles"> ... </div>
+      <!-- PANE: UPLOAD -->
+      <div class="pane" id="pane-upload">
+        <div class="card p-6 mb-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Bulk Student CSV Upload</h2>
+          <p class="text-slate-400 text-xs mb-5">Required columns: roll_no, class, section (and stream — required only for class 11/12: Science, Commerce, or Arts). Use this to bulk-set academic placement for students whose login accounts already exist. To create brand-new logins, use "Add Student / Teacher".</p>
+          <div id="drop-zone" class="drop-zone">
+            <svg class="w-10 h-10 text-indigo-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <p class="text-slate-600 text-sm font-semibold mb-1">Drag & drop your CSV here</p>
+            <p class="text-slate-400 text-xs">or click to browse · .csv only · max 10MB</p>
+            <input type="file" id="csv-file-input" accept=".csv" class="hidden" />
+          </div>
+          <div id="file-info" class="hidden mt-4 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+            <div class="flex items-center gap-3 overflow-hidden">
+              <svg class="w-5 h-5 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <div class="overflow-hidden"><p class="text-slate-800 text-sm font-semibold truncate" id="file-name">–</p><p class="text-slate-400 text-xs" id="file-size">–</p></div>
+            </div>
+            <button id="file-remove-btn" class="text-slate-400 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+          </div>
+          <div id="upload-progress-wrap" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-1"><span class="text-slate-500 text-xs" id="upload-progress-label">Uploading…</span><span class="text-slate-500 text-xs mono" id="upload-progress-pct">0%</span></div>
+            <div class="prog-bar-bg"><div id="upload-progress-bar" class="prog-bar" style="width:0%;background:#4f46e5;"></div></div>
+          </div>
+          <div class="flex items-center gap-3 mt-5">
+            <button id="upload-submit-btn" class="btn-primary" disabled>Upload CSV</button>
+            <button id="upload-reset-btn" class="btn-outline">Reset</button>
+          </div>
+          <div id="upload-result-wrap" class="hidden mt-5">
+            <h3 class="text-slate-600 text-xs font-bold uppercase tracking-wide mb-2">Server Response</h3>
+            <div class="payload-box" id="upload-payload-box"></div>
+          </div>
+        </div>
+      </div>
 
-      <!-- PANE: SECURITY (unchanged) -->
-      <div class="pane" id="pane-security"> ... </div>
+      <!-- PANE: ROLES -->
+      <div class="pane" id="pane-roles">
+        <div class="card p-6 mb-4" style="max-width:640px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Change User Role</h2>
+          <p class="text-slate-400 text-xs mb-5">Role changes are written to the audit log and security log. Promoting to Admin is flagged for review.</p>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">User ID or Full Name</label>
+              <input type="text" id="role-user-id" class="form-inp" placeholder="UUID or exact full name" />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 text-xs font-semibold mb-1">Current Role</label>
+                <select id="role-current" class="form-sel w-full"><option value="student">Student</option><option value="teacher">Teacher</option><option value="admin">Admin</option></select>
+              </div>
+              <div>
+                <label class="block text-slate-600 text-xs font-semibold mb-1">New Role</label>
+                <select id="role-new" class="form-sel w-full"><option value="student">Student</option><option value="teacher">Teacher</option><option value="admin">Admin</option></select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Reason</label>
+              <textarea id="role-reason" class="form-inp" rows="2" placeholder="Why is this role being changed?"></textarea>
+            </div>
+            <button id="role-submit-btn" class="btn-danger w-48">Apply Role Change</button>
+          </div>
+          <div id="role-result-wrap" class="hidden mt-5">
+            <div class="payload-box" id="role-payload-box"></div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-xs">Tip: open <button id="role-go-users" class="text-indigo-600 font-semibold hover:underline">User Management</button> to look up a user's ID.</p>
+      </div>
 
-      <!-- PANE: USERS (unchanged) -->
-      <div class="pane" id="pane-users"> ... </div>
+      <!-- PANE: SECURITY -->
+      <div class="pane" id="pane-security">
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">Live Threat Intelligence Feed</h2>
+            <button id="security-refresh-btn" class="btn-outline" style="padding:6px 14px;font-size:12px;">Refresh</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Time</th><th>Event Type</th><th>Severity</th><th>User ID</th><th>IP Address</th><th>Details</th></tr></thead><tbody id="security-logs-tbody"></tbody></table></div>
+          <div id="security-logs-empty" class="hidden p-8 text-center text-slate-400 text-sm">No security events found.</div>
+        </div>
+      </div>
+
+      <!-- PANE: USERS -->
+      <div class="pane" id="pane-users">
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-slate-800 font-bold text-sm">User Registry</h2>
+            <div class="flex items-center gap-2">
+              <input type="text" id="users-search" class="form-inp" style="width:200px;" placeholder="Search by name…" />
+              <select id="users-role-filter" class="form-sel"><option value="">All Roles</option><option value="student">Student</option><option value="teacher">Teacher</option><option value="admin">Admin</option></select>
+              <button id="users-refresh-btn" class="btn-outline" style="padding:9px 14px;font-size:12px;">Search</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Full Name</th><th>Role</th><th>Class</th><th>User ID</th><th>Joined</th><th class="text-right">Action</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
+          <div id="users-empty" class="hidden p-8 text-center text-slate-400 text-sm">No users found.</div>
+          <div class="px-5 py-3 border-t border-slate-100 text-slate-400 text-xs" id="users-count-label">Loading…</div>
+        </div>
+      </div>
+
+      <!-- PANE: ADD USER -->
+      <div class="pane" id="pane-adduser">
+        <div class="card p-6" style="max-width:760px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Create New Login Account</h2>
+          <p class="text-slate-400 text-xs mb-5">Creates a real login (email + password) and profile. Students are auto-enrolled into all subjects for their class/stream. Teachers are assigned the subjects checked below.</p>
+
+          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label>
+              <input type="text" id="nu-fullname" class="form-inp" placeholder="e.g. Rahul Kumar" />
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Role</label>
+              <select id="nu-role" class="form-sel w-full"><option value="student">Student</option><option value="teacher">Teacher</option></select>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Username</label>
+              <input type="text" id="nu-username" class="form-inp" placeholder="e.g. rahul.kumar" />
+              <p class="text-slate-400 text-xs mt-1">Login email will be <span class="mono" id="nu-email-preview">username@umslaxmannagar.edu</span></p>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Temporary Password</label>
+              <input type="text" id="nu-password" class="form-inp" placeholder="min. 8 characters" />
+            </div>
+          </div>
+
+          <div id="nu-student-fields" class="grid sm:grid-cols-2 gap-4 mb-4 pt-4 border-t border-slate-100">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Roll Number</label>
+              <input type="text" id="nu-rollno" class="form-inp" placeholder="e.g. 24" />
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Class</label>
+              <select id="nu-class" class="form-sel w-full">
+                <option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Section</label>
+              <select id="nu-section" class="form-sel w-full"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+            </div>
+            <div id="nu-stream-wrap" class="hidden">
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Stream</label>
+              <select id="nu-stream" class="form-sel w-full"><option value="Science">Science</option><option value="Commerce">Commerce</option><option value="Arts">Arts</option></select>
+            </div>
+          </div>
+
+          <div id="nu-teacher-fields" class="hidden mb-4 pt-4 border-t border-slate-100">
+            <p class="text-slate-600 text-xs font-semibold mb-2">Subjects to Teach (optional — can also assign later)</p>
+            <div id="nu-subject-grid" class="space-y-3 max-h-72 overflow-y-auto pr-2"></div>
+          </div>
+
+          <button id="nu-submit-btn" class="btn-primary">Create Account</button>
+          <div id="nu-result-wrap" class="hidden mt-5">
+            <div class="payload-box" id="nu-payload-box"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: BROADCASTS (New – similar to teacher but admin delete all) -->
+      <div class="pane" id="pane-broadcasts">
+        <div class="card p-6 mb-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">Create New Broadcast</h2>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Message</label>
+              <textarea id="admin-broadcast-msg" class="form-inp" rows="3" placeholder="Type your message..." maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Image URL (optional)</label>
+              <input type="url" id="admin-broadcast-image" class="form-inp" placeholder="https://example.com/image.jpg" />
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Type</label>
+              <select id="admin-broadcast-type" class="form-sel w-full">
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+            <button id="admin-broadcast-submit" class="btn-primary w-40">Send Broadcast</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">📢 All Broadcasts</h2>
+          <div id="admin-broadcast-feed" class="space-y-4"></div>
+        </div>
+      </div>
 
     </main>
   </div>
@@ -219,103 +329,411 @@
   <script>
     (function() {
       'use strict';
+      function sanitise(s) { if(typeof s!=='string') return ''; return s.replace(/</g,'').replace(/>/g,'').replace(/"/g,'').replace(/'/g,'').replace(/\//g,'').replace(/\\/g,'').replace(/`/g,'').replace(/\$/g,'').replace(/&/g,'&amp;').replace(/alert/gi,'').replace(/onerror/gi,'').replace(/onload/gi,'').replace(/script/gi,'').replace(/javascript:/gi,'').trim(); }
 
-      function sanitise(s) {
-        if (typeof s !== 'string') return '';
-        return s.replace(/</g, '').replace(/>/g, '').replace(/"/g, '').replace(/'/g, '').replace(/\//g, '').replace(/\\/g,
-          '').replace(/`/g, '').replace(/\$/g, '').replace(/&/g, '&amp;').replace(/alert/gi, '').replace(/onerror/gi, '')
-          .replace(/onload/gi, '').replace(/script/gi, '').replace(/javascript:/gi, '').trim();
+      const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
+      if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
+      if(role&&role!=='admin'){ const map={student:'student.html',teacher:'teacher.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
+      const SESSION_TTL=60*60*1000;
+      if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
+
+      const safeUser=sanitise(username);
+      document.getElementById('sb-name').textContent=safeUser; document.getElementById('sb-avatar').textContent=safeUser.charAt(0).toUpperCase();
+
+      // ─── Shared helpers ───
+      function authHeaders(extra) {
+        const t = sessionStorage.getItem('cms_token');
+        return Object.assign({ 'Authorization': 'Bearer ' + t, 'X-Requested-With': 'XMLHttpRequest' }, extra || {});
       }
+      const ROLE_BADGE_CLS = { admin: 'bg-rose-50 text-rose-700 border border-rose-200', teacher: 'bg-indigo-50 text-indigo-700 border border-indigo-200', student: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+      function roleBadge(r) { const cls = ROLE_BADGE_CLS[r] || 'bg-slate-100 text-slate-600 border border-slate-200'; return '<span class="'+cls+' text-xs font-bold px-2 py-0.5 rounded-full">'+sanitise(r||'unknown')+'</span>'; }
+      const SEVERITY_STYLE = { BLOCK: { row: 'log-row-block', badge: 'bg-rose-100 text-rose-700' }, WARN: { row: 'log-row-warn', badge: 'bg-amber-100 text-amber-700' }, OK: { row: 'log-row-ok', badge: 'bg-emerald-100 text-emerald-700' }, INFO: { row: 'log-row-info', badge: 'bg-blue-100 text-blue-700' } };
+      function severityBadge(s) { const st = SEVERITY_STYLE[s] || SEVERITY_STYLE.INFO; return '<span class="'+st.badge+' text-xs font-bold px-2 py-0.5 rounded-full">'+sanitise(s||'INFO')+'</span>'; }
 
-      // ---------- AUTH ----------
-      const token = sessionStorage.getItem('cms_token');
-      const role = sessionStorage.getItem('cms_role');
-      const username = sessionStorage.getItem('cms_user');
-      const loginTS = parseInt(sessionStorage.getItem('cms_login_ts') || '0', 10);
-
-      if (!token || !username) {
-        window.location.replace('index.html');
-        throw new Error('No token');
+      // ─── Dashboard ───
+      function loadDashboard() {
+        Promise.all([
+          fetch('/api/admin/users', { headers: authHeaders() }).then(r => r.ok ? r.json() : []),
+          fetch('/api/admin/security-logs', { headers: authHeaders() }).then(r => r.ok ? r.json() : [])
+        ]).then(([users, logs]) => {
+          users = Array.isArray(users) ? users : [];
+          logs = Array.isArray(logs) ? logs : [];
+          document.getElementById('metric-students').textContent = users.filter(u => u.role === 'student').length;
+          document.getElementById('metric-teachers').textContent = users.filter(u => u.role === 'teacher').length;
+          document.getElementById('metric-admins').textContent = users.filter(u => u.role === 'admin').length;
+          const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+          document.getElementById('metric-events').textContent = logs.filter(l => new Date(l.created_at).getTime() > dayAgo).length;
+          const tbody = document.getElementById('dashboard-activity-tbody');
+          tbody.innerHTML = '';
+          if (!logs.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-slate-400 py-6">No recent activity.</td></tr>';
+          } else {
+            logs.slice(0, 8).forEach(l => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = '<td class="mono" style="font-size:12px;color:#64748b;">'+sanitise(new Date(l.created_at).toLocaleString())+'</td><td class="font-semibold">'+sanitise(l.event_type||'—')+'</td><td>'+severityBadge(l.severity)+'</td><td class="mono" style="font-size:12px;">'+sanitise(l.ip_address||'—')+'</td>';
+              tbody.appendChild(tr);
+            });
+          }
+        }).catch(err => { console.error('Dashboard load error:', err); showToast('Failed to load dashboard data.', 'error'); });
       }
-      if (role && role !== 'admin') {
-        const map = { student: 'student.html', teacher: 'teacher.html' };
-        window.location.replace(map[role] || 'index.html');
-        throw new Error('Wrong role');
-      }
-      const SESSION_TTL = 60 * 60 * 1000;
-      if (Date.now() - loginTS > SESSION_TTL) {
-        sessionStorage.clear();
-        window.location.replace('index.html');
-        throw new Error('Expired');
-      }
+      document.getElementById('dashboard-refresh-btn').addEventListener('click', loadDashboard);
 
-      const safeUser = sanitise(username);
-      document.getElementById('sb-name').textContent = safeUser;
-      document.getElementById('sb-avatar').textContent = safeUser.charAt(0).toUpperCase();
-
-      // ---------- TOAST ----------
-      function showToast(msg, type) {
-        const el = document.getElementById('toast');
-        const cl = {
-          error: 'bg-rose-600 text-white',
-          success: 'bg-emerald-600 text-white',
-          info: 'bg-indigo-600 text-white',
-          warn: 'bg-amber-500 text-white'
-        };
-        el.className = 'toast ' + (cl[type] || cl.info);
-        el.textContent = msg;
-        void el.offsetWidth;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 4200);
-      }
-
-      // ---------- SECURE LOGOUT ----------
-      function secureLogout(reason) {
-        sessionStorage.clear();
-        if (reason) alert('SECURITY: ' + reason);
-        window.location.replace('index.html');
-      }
-      document.getElementById('logout-btn').addEventListener('click', function() {
-        if (confirm('Log out securely?')) secureLogout();
-      });
-
-      // ---------- SESSION TIMER ----------
-      (function timer() {
-        function upd() {
-          const el = Date.now() - loginTS;
-          const s = Math.floor(el / 1000) % 60;
-          const m = Math.floor(el / 60000) % 60;
-          const h = Math.floor(el / 3600000);
-          document.getElementById('session-timer').textContent =
-            String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-          if (el > SESSION_TTL) secureLogout('Session timed out.');
+      // ─── Bulk CSV Upload ───
+      (function() {
+        const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('csv-file-input'), fileInfo = document.getElementById('file-info'),
+              fileNameEl = document.getElementById('file-name'), fileSizeEl = document.getElementById('file-size'), submitBtn = document.getElementById('upload-submit-btn'),
+              resetBtn = document.getElementById('upload-reset-btn'), removeBtn = document.getElementById('file-remove-btn'), progressWrap = document.getElementById('upload-progress-wrap'),
+              progressBar = document.getElementById('upload-progress-bar'), progressPct = document.getElementById('upload-progress-pct'), progressLabel = document.getElementById('upload-progress-label'),
+              resultWrap = document.getElementById('upload-result-wrap'), payloadBox = document.getElementById('upload-payload-box');
+        let selectedFile = null;
+        function formatBytes(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(2) + ' MB'; }
+        function setFile(file) {
+          dropZone.classList.remove('accepted', 'rejected');
+          if (!file.name.toLowerCase().endsWith('.csv')) { dropZone.classList.add('rejected'); showToast('Only .csv files are allowed.', 'error'); return; }
+          if (file.size > 10 * 1024 * 1024) { dropZone.classList.add('rejected'); showToast('File exceeds 10MB limit.', 'error'); return; }
+          dropZone.classList.add('accepted'); selectedFile = file;
+          fileNameEl.textContent = file.name; fileSizeEl.textContent = formatBytes(file.size);
+          fileInfo.classList.remove('hidden'); submitBtn.disabled = false;
         }
-        upd();
-        setInterval(upd, 1000);
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+        function resetUpload() {
+          selectedFile = null; fileInput.value = ''; fileInfo.classList.add('hidden'); dropZone.classList.remove('accepted', 'rejected');
+          submitBtn.disabled = true; progressWrap.classList.add('hidden'); progressBar.style.width = '0%'; progressBar.style.background = '#4f46e5';
+          progressPct.textContent = '0%'; resultWrap.classList.add('hidden'); payloadBox.textContent = '';
+        }
+        removeBtn.addEventListener('click', resetUpload);
+        resetBtn.addEventListener('click', resetUpload);
+        submitBtn.addEventListener('click', function() {
+          if (!selectedFile) return;
+          const token = sessionStorage.getItem('cms_token');
+          const formData = new FormData(); formData.append('file', selectedFile);
+          submitBtn.disabled = true; progressWrap.classList.remove('hidden'); progressLabel.textContent = 'Uploading…'; resultWrap.classList.add('hidden');
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/admin/bulk-upload');
+          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+          xhr.upload.onprogress = function(e) { if (e.lengthComputable) { const pct = Math.round((e.loaded / e.total) * 100); progressBar.style.width = pct + '%'; progressPct.textContent = pct + '%'; } };
+          xhr.onload = function() {
+            let data; try { data = JSON.parse(xhr.responseText); } catch(e) { data = { message: 'Invalid server response.' }; }
+            resultWrap.classList.remove('hidden'); payloadBox.textContent = JSON.stringify(data, null, 2);
+            if (xhr.status >= 200 && xhr.status < 300) { progressLabel.textContent = 'Upload complete'; progressBar.style.background = '#10b981'; showToast(data.message || 'Upload successful.', 'success'); }
+            else { progressLabel.textContent = 'Upload failed'; progressBar.style.background = '#ef4444'; showToast(data.message || 'Upload failed.', 'error'); }
+            submitBtn.disabled = false;
+          };
+          xhr.onerror = function() {
+            progressLabel.textContent = 'Upload failed'; progressBar.style.background = '#ef4444'; resultWrap.classList.remove('hidden');
+            payloadBox.textContent = 'Network error during upload.'; showToast('Network error during upload.', 'error'); submitBtn.disabled = false;
+          };
+          xhr.send(formData);
+        });
       })();
 
-      // ---------- NAVIGATION ----------
+      // ─── Role Management ───
+      document.getElementById('role-go-users').addEventListener('click', function() { switchPane('users'); });
+      document.getElementById('role-submit-btn').addEventListener('click', function() {
+        const user_id = document.getElementById('role-user-id').value.trim();
+        const current_role = document.getElementById('role-current').value;
+        const new_role = document.getElementById('role-new').value;
+        const reason = document.getElementById('role-reason').value.trim();
+        const resultWrap = document.getElementById('role-result-wrap'), payloadBox = document.getElementById('role-payload-box');
+        if (!user_id) { showToast('Enter a User ID or full name.', 'error'); return; }
+        if (current_role === new_role) { showToast('New role must differ from current role.', 'error'); return; }
+        if (reason.length < 3) { showToast('Reason must be at least 3 characters.', 'error'); return; }
+        if (new_role === 'admin' && !confirm('Promote this user to Admin? This is flagged for review.')) return;
+        fetch('/api/admin/change-role', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ user_id, current_role, new_role, reason }) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            resultWrap.classList.remove('hidden'); payloadBox.textContent = JSON.stringify(data, null, 2);
+            if (ok) { showToast(data.message || 'Role updated.', 'success'); document.getElementById('role-reason').value = ''; }
+            else { showToast(data.message || 'Role change failed.', 'error'); }
+          })
+          .catch(() => showToast('Role change request failed.', 'error'));
+      });
+
+      // ─── Security Logs ───
+      function loadSecurityLogs() {
+        const tbody = document.getElementById('security-logs-tbody'), emptyEl = document.getElementById('security-logs-empty');
+        fetch('/api/admin/security-logs', { headers: authHeaders() }).then(res => res.json()).then(data => {
+          tbody.innerHTML = '';
+          if (!Array.isArray(data) || !data.length) { emptyEl.classList.remove('hidden'); return; }
+          emptyEl.classList.add('hidden');
+          data.forEach(l => {
+            const st = SEVERITY_STYLE[l.severity] || SEVERITY_STYLE.INFO;
+            let details = '—'; try { details = l.details ? JSON.stringify(l.details) : '—'; } catch(e) {}
+            const tr = document.createElement('tr'); tr.className = st.row;
+            tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(new Date(l.created_at).toLocaleString())+'</td><td class="font-semibold">'+sanitise(l.event_type||'—')+'</td><td>'+severityBadge(l.severity)+'</td><td class="mono" style="font-size:11px;color:#64748b;">'+sanitise(l.user_id||'—')+'</td><td class="mono" style="font-size:12px;">'+sanitise(l.ip_address||'—')+'</td><td class="mono" style="font-size:11px;color:#94a3b8;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+sanitise(details)+'">'+sanitise(details)+'</td>';
+            tbody.appendChild(tr);
+          });
+        }).catch(err => { console.error('Security logs error:', err); showToast('Failed to load security logs.', 'error'); });
+      }
+      document.getElementById('security-refresh-btn').addEventListener('click', loadSecurityLogs);
+
+      // ─── User Management ───
+      function loadUsers() {
+        const search = document.getElementById('users-search').value.trim(), role = document.getElementById('users-role-filter').value;
+        const params = new URLSearchParams(); if (search) params.set('search', search); if (role) params.set('role', role);
+        const tbody = document.getElementById('users-tbody'), emptyEl = document.getElementById('users-empty'), countLabel = document.getElementById('users-count-label');
+        countLabel.textContent = 'Loading…';
+        fetch('/api/admin/users?' + params.toString(), { headers: authHeaders() }).then(res => res.json()).then(data => {
+          tbody.innerHTML = '';
+          if (!Array.isArray(data) || !data.length) { emptyEl.classList.remove('hidden'); countLabel.textContent = '0 users found'; return; }
+          emptyEl.classList.add('hidden'); countLabel.textContent = data.length + ' user' + (data.length === 1 ? '' : 's') + ' found';
+          data.forEach(u => {
+            const tr = document.createElement('tr');
+            const shortId = u.id ? u.id.slice(0, 8) + '…' : '—';
+            let classInfo = '—';
+            if (u.role === 'student' && u.class) {
+              classInfo = 'Class ' + sanitise(String(u.class)) + '-' + sanitise(u.section || '');
+              if (u.stream) classInfo += ' (' + sanitise(u.stream) + ')';
+            }
+            tr.innerHTML = '<td class="font-semibold">'+sanitise(u.full_name||'Unknown')+'</td><td>'+roleBadge(u.role)+'</td><td style="color:#64748b;font-size:13px;">'+classInfo+'</td><td class="mono" style="font-size:11px;color:#64748b;" title="'+sanitise(u.id||'')+'">'+shortId+'</td><td style="color:#64748b;">'+(u.created_at ? sanitise(new Date(u.created_at).toLocaleDateString()) : '—')+'</td><td class="text-right"><button class="change-role-btn text-indigo-600 hover:text-indigo-800 text-xs font-medium" data-id="'+sanitise(u.id||'')+'" data-role="'+sanitise(u.role||'')+'">Change Role</button></td>';
+            tbody.appendChild(tr);
+          });
+          document.querySelectorAll('.change-role-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              document.getElementById('role-user-id').value = this.dataset.id;
+              document.getElementById('role-current').value = this.dataset.role;
+              switchPane('roles');
+              showToast('User loaded into Role Management form.', 'info');
+            });
+          });
+        }).catch(err => { console.error('Users load error:', err); showToast('Failed to load users.', 'error'); countLabel.textContent = 'Failed to load.'; });
+      }
+      document.getElementById('users-refresh-btn').addEventListener('click', loadUsers);
+      document.getElementById('users-search').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadUsers(); });
+      document.getElementById('users-role-filter').addEventListener('change', loadUsers);
+
+      // ─── Add Student / Teacher ───
+      const SUBJECT_MAP = {
+        '9': ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer Science'],
+        '10': ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer Science'],
+        '11': { Science: ['English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'], Commerce: ['English', 'Accountancy', 'Business Studies', 'Economics', 'Mathematics'], Arts: ['English', 'History', 'Political Science', 'Geography', 'Economics'] },
+        '12': { Science: ['English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'], Commerce: ['English', 'Accountancy', 'Business Studies', 'Economics', 'Mathematics'], Arts: ['English', 'History', 'Political Science', 'Geography', 'Economics'] }
+      };
+      (function() {
+        const fullname = document.getElementById('nu-fullname'), username = document.getElementById('nu-username'),
+              password = document.getElementById('nu-password'), roleSel = document.getElementById('nu-role'),
+              studentFields = document.getElementById('nu-student-fields'), teacherFields = document.getElementById('nu-teacher-fields'),
+              classSel = document.getElementById('nu-class'), streamWrap = document.getElementById('nu-stream-wrap'), streamSel = document.getElementById('nu-stream'),
+              sectionSel = document.getElementById('nu-section'), rollInput = document.getElementById('nu-rollno'),
+              emailPreview = document.getElementById('nu-email-preview'), subjectGrid = document.getElementById('nu-subject-grid'),
+              submitBtn = document.getElementById('nu-submit-btn'), resultWrap = document.getElementById('nu-result-wrap'), payloadBox = document.getElementById('nu-payload-box');
+
+        username.addEventListener('input', () => { emailPreview.textContent = (username.value.trim() || 'username') + '@umslaxmannagar.edu'; });
+
+        function renderSubjectGrid() {
+          subjectGrid.innerHTML = '';
+          ['9', '10'].forEach(cls => {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = '<p class="text-slate-500 text-xs font-bold mb-1.5">Class ' + cls + '</p>';
+            const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+            SUBJECT_MAP[cls].forEach(subj => {
+              row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="subj-check" data-class="'+cls+'" data-stream="" data-subject="'+subj+'"> '+subj+'</label>';
+            });
+            wrap.appendChild(row);
+            subjectGrid.appendChild(wrap);
+          });
+          ['11', '12'].forEach(cls => {
+            ['Science', 'Commerce', 'Arts'].forEach(str => {
+              const wrap = document.createElement('div');
+              wrap.innerHTML = '<p class="text-slate-500 text-xs font-bold mb-1.5">Class ' + cls + ' – ' + str + '</p>';
+              const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+              SUBJECT_MAP[cls][str].forEach(subj => {
+                row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="subj-check" data-class="'+cls+'" data-stream="'+str+'" data-subject="'+subj+'"> '+subj+'</label>';
+              });
+              wrap.appendChild(row);
+              subjectGrid.appendChild(wrap);
+            });
+          });
+        }
+        renderSubjectGrid();
+
+        function updateStreamVisibility() {
+          const cls = classSel.value;
+          streamWrap.classList.toggle('hidden', !['11', '12'].includes(cls));
+        }
+        classSel.addEventListener('change', updateStreamVisibility);
+        updateStreamVisibility();
+
+        function updateRoleVisibility() {
+          const isStudent = roleSel.value === 'student';
+          studentFields.classList.toggle('hidden', !isStudent);
+          teacherFields.classList.toggle('hidden', isStudent);
+        }
+        roleSel.addEventListener('change', updateRoleVisibility);
+        updateRoleVisibility();
+
+        function resetForm() {
+          fullname.value = ''; username.value = ''; password.value = ''; rollInput.value = '';
+          emailPreview.textContent = 'username@umslaxmannagar.edu';
+          document.querySelectorAll('.subj-check').forEach(cb => { cb.checked = false; });
+        }
+
+        submitBtn.addEventListener('click', function() {
+          const role = roleSel.value;
+          const payload = { full_name: fullname.value.trim(), username: username.value.trim(), password: password.value, role };
+          if (!payload.full_name || payload.full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
+          if (!payload.username || payload.username.length < 3) { showToast('Enter a valid username.', 'error'); return; }
+          if (!payload.password || payload.password.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
+
+          if (role === 'student') {
+            payload.roll_no = rollInput.value.trim();
+            payload.class_level = classSel.value;
+            payload.section = sectionSel.value;
+            if (['11', '12'].includes(payload.class_level)) payload.stream = streamSel.value;
+            if (!payload.roll_no) { showToast('Enter a roll number.', 'error'); return; }
+          } else {
+            payload.subjects = Array.from(document.querySelectorAll('.subj-check:checked')).map(cb => ({
+              class_level: cb.dataset.class, stream: cb.dataset.stream || null, subject: cb.dataset.subject
+            }));
+          }
+
+          submitBtn.disabled = true;
+          fetch('/api/admin/create-user', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+              resultWrap.classList.remove('hidden'); payloadBox.textContent = JSON.stringify(data, null, 2);
+              if (ok) { showToast(data.message || 'Account created.', 'success'); resetForm(); }
+              else { showToast(data.message || 'Could not create account.', 'error'); }
+              submitBtn.disabled = false;
+            })
+            .catch(() => { showToast('Request failed.', 'error'); submitBtn.disabled = false; });
+        });
+      })();
+
+      loadDashboard();
+
+      // ─── Broadcast Functions ───
+      function loadAdminBroadcasts() {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          const feed = document.getElementById('admin-broadcast-feed');
+          feed.innerHTML = '';
+          if (!data || data.length === 0) {
+            feed.innerHTML = '<p class="text-slate-400 text-sm">No broadcasts yet.</p>';
+            return;
+          }
+          data.forEach(b => {
+            const sender = b.profiles ? b.profiles.full_name : 'Unknown';
+            const role = b.profiles ? b.profiles.role : 'user';
+            let badge = '';
+            if (role === 'admin') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full animate-pulse shadow-lg shadow-amber-400/50">Admin</span>';
+            } else if (role === 'teacher') {
+              badge = '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Teacher</span>';
+            }
+            // Admin can delete any broadcast
+            const actions = `<button class="delete-broadcast-btn text-rose-600 hover:text-rose-800 text-xs font-medium" data-id="${b.id}">Delete</button>`;
+            const imageHtml = b.type === 'image' && b.image_url ? `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` : '';
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200';
+            div.innerHTML = `
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="font-semibold text-slate-800">${sanitise(sender)}</span>
+                  ${badge}
+                  <span class="text-xs text-slate-400 ml-2">${new Date(b.sent_at).toLocaleString()}</span>
+                </div>
+                <div>${actions}</div>
+              </div>
+              <p class="text-slate-700 mt-1">${sanitise(b.message)}</p>
+              ${imageHtml}
+            `;
+            feed.appendChild(div);
+          });
+          document.querySelectorAll('.delete-broadcast-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              if (confirm('Delete this broadcast?')) {
+                deleteBroadcastAdmin(this.dataset.id);
+              }
+            });
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('admin-broadcast-feed').innerHTML = '<p class="text-rose-500 text-sm">Failed to load broadcasts.</p>';
+        });
+      }
+
+      function createBroadcastAdmin(message, image_url, type) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch('/api/broadcasts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ message, image_url, type })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast sent!');
+            loadAdminBroadcasts();
+            document.getElementById('admin-broadcast-msg').value = '';
+            document.getElementById('admin-broadcast-image').value = '';
+          }
+        })
+        .catch(err => alert('Failed to send broadcast.'));
+      }
+
+      function deleteBroadcastAdmin(id) {
+        const token = sessionStorage.getItem('cms_token');
+        fetch(`/api/broadcasts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message) {
+            alert('Broadcast deleted.');
+            loadAdminBroadcasts();
+          }
+        })
+        .catch(err => alert('Failed to delete broadcast.'));
+      }
+
+      document.getElementById('admin-broadcast-submit').addEventListener('click', function() {
+        const msg = document.getElementById('admin-broadcast-msg').value.trim();
+        const image = document.getElementById('admin-broadcast-image').value.trim();
+        const type = document.getElementById('admin-broadcast-type').value;
+        if (!msg && !image) { alert('Please enter a message or image URL.'); return; }
+        createBroadcastAdmin(msg, image || null, type);
+      });
+
+      // ─── Navigation (switchPane) ───
       const paneMap = {
         dashboard: { pane: 'pane-dashboard', title: 'System Dashboard', sub: 'Operational Health Overview' },
         upload: { pane: 'pane-upload', title: 'Bulk CSV Upload', sub: 'Hardened File Validation & Upload' },
-        create: { pane: 'pane-create', title: 'Create Account', sub: 'Add Students & Teachers' },
         roles: { pane: 'pane-roles', title: 'Role Management', sub: 'Privilege Isolation Control' },
         security: { pane: 'pane-security', title: 'Security Logs', sub: 'Live Threat Intelligence Feed' },
-        users: { pane: 'pane-users', title: 'User Management', sub: '5,000+ Record Registry' }
+        users: { pane: 'pane-users', title: 'User Management', sub: 'Student & Teacher Registry' },
+        adduser: { pane: 'pane-adduser', title: 'Add Student / Teacher', sub: 'Create a New Login Account' },
+        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
       };
-
       function switchPane(k) {
         const d = paneMap[k];
         if (!d) return;
         document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
         document.getElementById(d.pane).classList.add('active');
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        const btn = document.querySelector('[data-pane="' + k + '"]');
+        const btn = document.querySelector('[data-pane="'+k+'"]');
         if (btn) btn.classList.add('active');
         document.getElementById('page-title').textContent = d.title;
         document.getElementById('page-sub').textContent = d.sub;
+        if (k === 'broadcasts') {
+          loadAdminBroadcasts();
+        } else if (k === 'security') {
+          loadSecurityLogs();
+        } else if (k === 'users') {
+          loadUsers();
+        }
       }
-
       document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
         btn.addEventListener('click', function() {
           switchPane(this.getAttribute('data-pane'));
@@ -323,7 +741,6 @@
           document.getElementById('sb-overlay').classList.add('hidden');
         }, false);
       });
-
       document.getElementById('menu-btn').addEventListener('click', function() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('sb-overlay').classList.remove('hidden');
@@ -333,111 +750,14 @@
         document.getElementById('sb-overlay').classList.add('hidden');
       }, false);
 
-      // ---------- CREATE ACCOUNT FORM ----------
-      const roleSelect = document.getElementById('create-role');
-      const studentFields = document.getElementById('student-fields');
-      const teacherFields = document.getElementById('teacher-fields');
+      // ─── Other functions ───
+      function showToast(msg,type){ const el=document.getElementById('toast'); const cl={error:'bg-rose-600 text-white',success:'bg-emerald-600 text-white',info:'bg-indigo-600 text-white',warn:'bg-amber-500 text-white'}; el.className='toast '+(cl[type]||cl.info); el.textContent=msg; void el.offsetWidth; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4200); }
+      function secureLogout(reason){ sessionStorage.clear(); if(reason) alert('SECURITY: '+reason); window.location.replace('index.html'); }
+      document.getElementById('logout-btn').addEventListener('click', function(){ if(confirm('Log out securely?')) secureLogout(); });
 
-      roleSelect.addEventListener('change', function() {
-        const val = this.value;
-        if (val === 'student') {
-          studentFields.classList.remove('hidden');
-          teacherFields.classList.add('hidden');
-        } else if (val === 'teacher') {
-          studentFields.classList.add('hidden');
-          teacherFields.classList.remove('hidden');
-        } else {
-          // admin
-          studentFields.classList.add('hidden');
-          teacherFields.classList.add('hidden');
-        }
-      });
+      (function timer(){ function upd(){ const el=Date.now()-loginTS, s=Math.floor(el/1000)%60, m=Math.floor(el/60000)%60, h=Math.floor(el/3600000); document.getElementById('session-timer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(el>SESSION_TTL) secureLogout('Session timed out.'); } upd(); setInterval(upd,1000); })();
 
-      document.getElementById('create-user-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const full_name = sanitise(document.getElementById('create-fullname').value.trim());
-        const email = sanitise(document.getElementById('create-email').value.trim());
-        const password = document.getElementById('create-password').value;
-        const role = roleSelect.value;
-
-        if (!full_name) { showToast('Please enter full name.', 'error'); return; }
-        if (!email || !email.includes('@')) { showToast('Please enter a valid email.', 'error'); return; }
-        if (!password || password.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
-
-        const payload = { full_name, email, password, role };
-
-        if (role === 'student') {
-          const cls = parseInt(document.getElementById('create-class').value);
-          const section = sanitise(document.getElementById('create-section').value.trim().toUpperCase());
-          const roll = sanitise(document.getElementById('create-roll').value.trim());
-          if (isNaN(cls) || cls < 9 || cls > 12) { showToast('Class must be between 9 and 12.', 'error'); return; }
-          payload.class = cls;
-          payload.section = section || 'A';
-          if (roll) payload.roll_no = roll;
-        } else if (role === 'teacher') {
-          const empId = sanitise(document.getElementById('create-employee-id').value.trim());
-          const dept = sanitise(document.getElementById('create-department').value.trim());
-          if (empId) payload.employee_id = empId;
-          if (dept) payload.department = dept;
-        }
-
-        const btn = this.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerHTML = '<svg class="w-5 h-5 spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 5.373 22 12h-4z"/></svg> Creating…';
-
-        fetch('/api/admin/create-user', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify(payload)
-        })
-        .then(res => res.json().then(data => ({ ok: res.ok, data })))
-        .then(result => {
-          const box = document.getElementById('create-result');
-          const msg = document.getElementById('create-result-msg');
-          box.classList.remove('hidden');
-          if (result.ok) {
-            document.getElementById('create-result-box').className = 'rounded-lg p-4 border border-emerald-300 bg-emerald-50';
-            msg.textContent = '✅ User created successfully! Email: ' + result.data.email + ' Role: ' + result.data.role;
-            msg.className = 'text-emerald-700 text-sm font-medium';
-            // Clear form
-            document.getElementById('create-fullname').value = '';
-            document.getElementById('create-email').value = '';
-            document.getElementById('create-password').value = '';
-            document.getElementById('create-class').value = '';
-            document.getElementById('create-section').value = '';
-            document.getElementById('create-roll').value = '';
-            document.getElementById('create-employee-id').value = '';
-            document.getElementById('create-department').value = '';
-            showToast('User created successfully!', 'success');
-          } else {
-            document.getElementById('create-result-box').className = 'rounded-lg p-4 border border-rose-300 bg-rose-50';
-            msg.textContent = '❌ Error: ' + (result.data.message || 'Unknown error');
-            msg.className = 'text-rose-700 text-sm font-medium';
-            showToast(result.data.message || 'Creation failed.', 'error');
-          }
-        })
-        .catch(err => {
-          const box = document.getElementById('create-result');
-          const msg = document.getElementById('create-result-msg');
-          box.classList.remove('hidden');
-          document.getElementById('create-result-box').className = 'rounded-lg p-4 border border-rose-300 bg-rose-50';
-          msg.textContent = '❌ Network error: ' + err.message;
-          msg.className = 'text-rose-700 text-sm font-medium';
-          showToast('Network error. Please try again.', 'error');
-        })
-        .finally(() => {
-          btn.disabled = false;
-          btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Create Account';
-        });
-      });
-
+      window.addEventListener('pageshow', function(e){ if(e.persisted&&!sessionStorage.getItem('cms_token')) window.location.replace('index.html'); }, false);
     })();
   </script>
 </body>
