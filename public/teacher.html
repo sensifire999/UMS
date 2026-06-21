@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://* http://*; connect-src 'self';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta name="robots" content="noindex,nofollow" />
   <title>Teacher Console | UMS Laxman Nagar CMS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
   <style>
-    /* Same styles as before – include all needed classes */
     * { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
     .mono { font-family: 'JetBrains Mono', monospace; }
@@ -45,14 +44,12 @@
     .val-err.show { display:block; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spin { animation:spin .7s linear infinite; }
-    select.course-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:8px 12px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; }
-    select.course-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
-    .payload-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#334155; max-height:200px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+    select.form-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:8px 12px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; }
+    select.form-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
     .form-inp { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; width:100%; transition:border-color .2s; }
     .form-inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); background:#fff; }
     .form-inp::placeholder { color:#94a3b8; }
-    .form-sel { border:1.5px solid #e2e8f0; border-radius:9px; background:#f8fafc; padding:9px 14px; font-size:13px; color:#1e293b; outline:none; cursor:pointer; transition:border-color .2s; width:100%; }
-    .form-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+    .payload-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#334155; max-height:200px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 flex overflow-hidden" style="height:100vh;">
@@ -78,12 +75,7 @@
       <button class="nav-link active" data-pane="overview"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Overview</button>
       <button class="nav-link" data-pane="attendance"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Mark Attendance</button>
       <button class="nav-link" data-pane="marks"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Enter Marks</button>
-      <button class="nav-link" data-pane="courses"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>My Courses</button>
-      <!-- NEW: Broadcasts -->
-      <button class="nav-link" data-pane="broadcasts">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-        Broadcasts
-      </button>
+      <button class="nav-link" data-pane="subjects"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>My Subjects</button>
     </nav>
     <div class="px-3 py-4 border-t border-slate-100">
       <button id="logout-btn" class="nav-link text-rose-500 hover:bg-rose-50 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Secure Logout</button>
@@ -104,55 +96,140 @@
     </header>
 
     <main class="flex-1 overflow-y-auto p-4 lg:p-6">
-      <!-- PANE: OVERVIEW (unchanged) -->
+
+      <!-- PANE: OVERVIEW -->
       <div class="pane active" id="pane-overview">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Assigned Courses</p><p class="text-2xl font-extrabold text-indigo-600">3</p><p class="text-xs text-slate-400 mt-0.5">Semester 5</p></div>
-          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Students</p><p class="text-2xl font-extrabold text-slate-800">186</p><p class="text-xs text-slate-400 mt-0.5">Across all sections</p></div>
-          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Avg. Attendance</p><p class="text-2xl font-extrabold text-emerald-600">82%</p><p class="text-xs text-slate-400 mt-0.5">This month</p></div>
-          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Pending Marks</p><p class="text-2xl font-extrabold text-rose-500">12</p><p class="text-xs text-slate-400 mt-0.5">Submissions due</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Assigned Subjects</p><p class="text-2xl font-extrabold text-indigo-600" id="ov-subjects">0</p><p class="text-xs text-slate-400 mt-0.5">Classes 9–12</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Total Students</p><p class="text-2xl font-extrabold text-slate-800" id="ov-students">0</p><p class="text-xs text-slate-400 mt-0.5">Across all subjects</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Avg. Attendance</p><p class="text-2xl font-extrabold text-emerald-600" id="ov-att">0%</p><p class="text-xs text-slate-400 mt-0.5">This month</p></div>
+          <div class="card p-4"><p class="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Pending Marks</p><p class="text-2xl font-extrabold text-rose-500" id="ov-pending">0</p><p class="text-xs text-slate-400 mt-0.5">Submissions due</p></div>
         </div>
         <div class="card overflow-hidden">
-          <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">Assigned Courses – Access Controlled View</h2></div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Course Code</th><th>Course Title</th><th>Section</th><th class="text-right">Students</th><th>Schedule</th><th class="text-center">Access Level</th><th class="text-center">Status</th></tr></thead><tbody id="courses-overview-tbody"></tbody></table></div>
+          <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">Assigned Subjects – Access Controlled View</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Subject Code</th><th>Subject Name</th><th>Class</th><th>Section</th><th>Schedule</th><th class="text-center">Status</th></tr></thead>
+              <tbody id="overview-subjects-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- PANE: ATTENDANCE (unchanged) -->
-      <div class="pane" id="pane-attendance"> ... </div>
-
-      <!-- PANE: MARKS (unchanged) -->
-      <div class="pane" id="pane-marks"> ... </div>
-
-      <!-- PANE: COURSES (unchanged) -->
-      <div class="pane" id="pane-courses"> ... </div>
-
-      <!-- PANE: BROADCASTS (New) -->
-      <div class="pane" id="pane-broadcasts">
-        <div class="card p-6 mb-5">
-          <h2 class="text-slate-800 font-bold text-sm mb-4">Create New Broadcast</h2>
-          <div class="grid grid-cols-1 gap-4">
+      <!-- PANE: ATTENDANCE -->
+      <div class="pane" id="pane-attendance">
+        <div class="card mb-5 p-5">
+          <div class="flex flex-wrap items-center gap-4">
             <div>
-              <label class="block text-slate-600 text-xs font-semibold mb-1">Message</label>
-              <textarea id="teacher-broadcast-msg" class="form-inp" rows="3" placeholder="Type your message..." maxlength="500"></textarea>
-            </div>
-            <div>
-              <label class="block text-slate-600 text-xs font-semibold mb-1">Image URL (optional)</label>
-              <input type="url" id="teacher-broadcast-image" class="form-inp" placeholder="https://example.com/image.jpg" />
-            </div>
-            <div>
-              <label class="block text-slate-600 text-xs font-semibold mb-1">Type</label>
-              <select id="teacher-broadcast-type" class="form-sel w-full">
-                <option value="text">Text</option>
-                <option value="image">Image</option>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Select Subject</label>
+              <select id="att-subject-sel" class="form-sel">
+                <option value="">Loading subjects…</option>
               </select>
             </div>
-            <button id="teacher-broadcast-submit" class="btn-primary w-40">Send Broadcast</button>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Date</label>
+              <input type="date" id="att-date" class="form-sel" style="width:auto;" />
+            </div>
+            <div class="ml-auto flex gap-2">
+              <button id="select-all-btn" class="btn-outline">Select All</button>
+              <button id="submit-att-btn" class="btn-primary">
+                <svg id="att-spin" class="w-4 h-4 hidden spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 5.373 22 12h-4z"></path></svg>
+                Submit Attendance
+              </button>
+            </div>
           </div>
         </div>
-        <div class="card p-5">
-          <h2 class="text-slate-800 font-bold text-sm mb-4">📢 All Broadcasts</h2>
-          <div id="teacher-broadcast-feed" class="space-y-4"></div>
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">Student Attendance Grid</h2>
+            <span class="text-xs text-slate-400 mono bg-slate-50 px-2.5 py-1 rounded-lg">Secure Submit → /api/admin/update-attendance</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Roll No.</th><th>Student Name</th><th class="text-center">Present</th><th class="text-center">Total Classes</th><th class="text-center">% So Far</th><th class="text-center">Status</th></tr></thead>
+              <tbody id="att-tbody">
+                <tr><td colspan="6" class="text-center text-slate-400">Select a subject to load students</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Payload preview -->
+        <div class="card p-5 mt-5">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-slate-600 text-xs font-bold uppercase tracking-wider">API Payload Preview (Sanitised)</p>
+            <button id="preview-att-btn" class="btn-outline" style="padding:6px 14px;font-size:12px;">Generate Preview</button>
+          </div>
+          <div class="payload-box" id="att-payload-preview">Click "Generate Preview" to inspect the outgoing JSON payload before submission.</div>
+        </div>
+      </div>
+
+      <!-- PANE: MARKS -->
+      <div class="pane" id="pane-marks">
+        <div class="card mb-5 p-5">
+          <div class="flex flex-wrap items-center gap-4">
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Select Subject</label>
+              <select id="marks-subject-sel" class="form-sel">
+                <option value="">Loading subjects…</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 text-xs font-semibold mb-1">Exam Type</label>
+              <select id="marks-exam-type" class="form-sel">
+                <option value="internal">Internal Assessment</option>
+                <option value="midterm">Mid-Term Exam</option>
+                <option value="final">Final / End-Sem</option>
+              </select>
+            </div>
+            <div class="ml-auto">
+              <button id="submit-marks-btn" class="btn-primary">
+                <svg id="marks-spin" class="w-4 h-4 hidden spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 5.373 22 12h-4z"></path></svg>
+                Submit Marks
+              </button>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+            <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <p class="text-amber-700 text-xs font-semibold">Anti-Tampering: Internal 0–30, External 0–70. Values outside are rejected.</p>
+          </div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">Marks Entry Grid</h2>
+            <span class="text-xs text-slate-400 mono bg-slate-50 px-2.5 py-1 rounded-lg">Boundary Validated · Bearer Token</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Roll No.</th><th>Student Name</th><th class="text-center">Internal<br/><span style="font-size:10px;color:#94a3b8;">(0–30)</span></th><th class="text-center">External<br/><span style="font-size:10px;color:#94a3b8;">(0–70)</span></th><th class="text-center">Total</th><th class="text-center">Validation</th></tr></thead>
+              <tbody id="marks-tbody">
+                <tr><td colspan="6" class="text-center text-slate-400">Select a subject to load students</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Payload preview -->
+        <div class="card p-5 mt-5">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-slate-600 text-xs font-bold uppercase tracking-wider">API Payload Preview (Sanitised)</p>
+            <button id="preview-marks-btn" class="btn-outline" style="padding:6px 14px;font-size:12px;">Generate Preview</button>
+          </div>
+          <div class="payload-box" id="marks-payload-preview">Click "Generate Preview" to inspect the outgoing JSON payload before submission.</div>
+        </div>
+      </div>
+
+      <!-- PANE: MY SUBJECTS -->
+      <div class="pane" id="pane-subjects">
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">My Subjects – Access Control List</h2>
+            <span class="bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold px-2.5 py-0.5 rounded-full">Read-Only</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Code</th><th>Subject Name</th><th>Class</th><th>Section</th><th>Schedule</th><th>Room</th></tr></thead>
+              <tbody id="subjects-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -162,188 +239,554 @@
   <script>
     (function() {
       'use strict';
-      function sanitise(s) { if(typeof s!=='string') return ''; return s.replace(/</g,'').replace(/>/g,'').replace(/"/g,'').replace(/'/g,'').replace(/\//g,'').replace(/\\/g,'').replace(/`/g,'').replace(/\$/g,'').replace(/&/g,'&amp;').replace(/alert/gi,'').replace(/onerror/gi,'').replace(/onload/gi,'').replace(/script/gi,'').replace(/javascript:/gi,'').trim(); }
 
-      const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
-      if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
-      if(role&&role!=='teacher'){ const map={student:'student.html',admin:'admin.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
-      const SESSION_TTL=60*60*1000;
-      if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
+      // ---------- SANITISATION ----------
+      function sanitise(s) {
+        if (typeof s !== 'string') return '';
+        return s.replace(/</g, '').replace(/>/g, '').replace(/"/g, '').replace(/'/g, '').replace(/\//g, '').replace(/\\/g,
+          '').replace(/`/g, '').replace(/\$/g, '').replace(/&/g, '&amp;').replace(/alert/gi, '').replace(/onerror/gi, '')
+          .replace(/onload/gi, '').replace(/script/gi, '').replace(/javascript:/gi, '').trim();
+      }
 
-      const safeUser=sanitise(username);
-      document.getElementById('sb-name').textContent=safeUser; document.getElementById('sb-avatar').textContent=safeUser.charAt(0).toUpperCase();
+      // ---------- AUTH / SESSION ----------
+      const token = sessionStorage.getItem('cms_token');
+      const role = sessionStorage.getItem('cms_role');
+      const username = sessionStorage.getItem('cms_user');
+      const loginTS = parseInt(sessionStorage.getItem('cms_login_ts') || '0', 10);
 
-      // ─── Existing Dashboard Data (unchanged) ───
-      // ... (all the existing data and functions for courses, attendance, marks, etc.) ...
+      if (!token || !username) {
+        window.location.replace('index.html');
+        throw new Error('No token');
+      }
+      if (role && role !== 'teacher') {
+        const map = { student: 'student.html', admin: 'admin.html' };
+        window.location.replace(map[role] || 'index.html');
+        throw new Error('Wrong role');
+      }
+      const SESSION_TTL = 60 * 60 * 1000;
+      if (Date.now() - loginTS > SESSION_TTL) {
+        sessionStorage.clear();
+        window.location.replace('index.html');
+        throw new Error('Expired');
+      }
 
-      // ─── Broadcast Functions ───
-      function loadTeacherBroadcasts() {
-        const token = sessionStorage.getItem('cms_token');
-        fetch('/api/broadcasts', {
-          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-          const feed = document.getElementById('teacher-broadcast-feed');
-          feed.innerHTML = '';
-          if (!data || data.length === 0) {
-            feed.innerHTML = '<p class="text-slate-400 text-sm">No broadcasts yet.</p>';
-            return;
-          }
-          // Decode token to get user ID
-          let userId = null;
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            userId = payload.id;
-          } catch(e) { console.error('Could not decode token'); }
-          data.forEach(b => {
-            const sender = b.profiles ? b.profiles.full_name : 'Unknown';
-            const role = b.profiles ? b.profiles.role : 'user';
-            const senderId = b.profiles ? b.profiles.id : null;
-            let badge = '';
-            let actions = '';
-            if (role === 'admin') {
-              badge = '<span class="ml-2 px-2 py-0.5 bg-amber-400 text-amber-900 text-xs font-bold rounded-full animate-pulse shadow-lg shadow-amber-400/50">Admin</span>';
-            } else if (role === 'teacher') {
-              badge = '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Teacher</span>';
-            }
-            // Teacher can edit/delete only own broadcasts
-            const isOwn = (senderId === userId && role === 'teacher');
-            if (isOwn) {
-              actions = `
-                <button class="edit-broadcast-btn text-indigo-600 hover:text-indigo-800 text-xs font-medium" data-id="${b.id}" data-msg="${sanitise(b.message)}" data-image="${b.image_url || ''}" data-type="${b.type}">Edit</button>
-                <button class="delete-broadcast-btn text-rose-600 hover:text-rose-800 text-xs font-medium ml-3" data-id="${b.id}">Delete</button>
-              `;
-            }
-            const imageHtml = b.type === 'image' && b.image_url ? `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` : '';
-            const div = document.createElement('div');
-            div.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200';
-            div.innerHTML = `
-              <div class="flex items-start justify-between">
-                <div>
-                  <span class="font-semibold text-slate-800">${sanitise(sender)}</span>
-                  ${badge}
-                  <span class="text-xs text-slate-400 ml-2">${new Date(b.sent_at).toLocaleString()}</span>
-                </div>
-                <div>${actions}</div>
+      const safeUser = sanitise(username);
+      document.getElementById('sb-name').textContent = safeUser;
+      document.getElementById('sb-avatar').textContent = safeUser.charAt(0).toUpperCase();
+
+      // ---------- TOAST ----------
+      function showToast(msg, type) {
+        const el = document.getElementById('toast');
+        const cl = {
+          error: 'bg-rose-600 text-white',
+          success: 'bg-emerald-600 text-white',
+          info: 'bg-indigo-600 text-white',
+          warn: 'bg-amber-500 text-white'
+        };
+        el.className = 'toast ' + (cl[type] || cl.info);
+        el.textContent = msg;
+        void el.offsetWidth;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 4000);
+      }
+
+      // ---------- SECURE LOGOUT ----------
+      function secureLogout(reason) {
+        sessionStorage.clear();
+        if (reason) alert('SECURITY: ' + reason);
+        window.location.replace('index.html');
+      }
+      document.getElementById('logout-btn').addEventListener('click', function() {
+        if (confirm('Log out securely?')) secureLogout();
+      });
+
+      // ---------- SESSION TIMER ----------
+      (function timer() {
+        function upd() {
+          const el = Date.now() - loginTS;
+          const s = Math.floor(el / 1000) % 60;
+          const m = Math.floor(el / 60000) % 60;
+          const h = Math.floor(el / 3600000);
+          document.getElementById('session-timer').textContent =
+            String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+          if (el > SESSION_TTL) secureLogout('Session timed out.');
+        }
+        upd();
+        setInterval(upd, 1000);
+      })();
+
+      // ---------- FETCH TEACHER DATA ----------
+      // We'll fetch assigned subjects and student lists for each subject.
+      // For now, we'll use a simulated endpoint; you should implement:
+      // GET /api/teacher/subjects -> list of subjects assigned to this teacher
+      // GET /api/teacher/subject-students?subject_code=XXX -> list of students enrolled in that subject
+
+      let assignedSubjects = [];
+      let currentStudents = [];
+
+      function loadAssignedSubjects() {
+        // In production, fetch from /api/teacher/subjects
+        // For demo, we'll create a dummy list based on the schema (sample)
+        // Since we don't have a real backend yet, we'll simulate.
+        // We'll use static data for the demo, but it's structured as if from API.
+
+        // Simulate API response
+        const dummySubjects = [
+          { code: 'MATH9', name: 'Mathematics', class: 9, section: 'A', schedule: 'MWF 09:00', room: 'LH-101' },
+          { code: 'SCI9', name: 'Science', class: 9, section: 'A', schedule: 'T/Th 10:30', room: 'LH-102' },
+          { code: 'MATH10', name: 'Mathematics', class: 10, section: 'B', schedule: 'MWF 11:00', room: 'LH-103' }
+        ];
+        assignedSubjects = dummySubjects;
+
+        // Populate dropdowns
+        const attSel = document.getElementById('att-subject-sel');
+        const marksSel = document.getElementById('marks-subject-sel');
+        const opts = assignedSubjects.map(s =>
+          `<option value="${s.code}">${s.code} – ${s.name} (Class ${s.class}-${s.section})</option>`
+        ).join('');
+        attSel.innerHTML = '<option value="">Select subject</option>' + opts;
+        marksSel.innerHTML = '<option value="">Select subject</option>' + opts;
+
+        // Overview table
+        const tbody = document.getElementById('overview-subjects-tbody');
+        tbody.innerHTML = '';
+        assignedSubjects.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(s.code)}</td>
+            <td>${sanitise(s.name)}</td>
+            <td>${s.class}</td>
+            <td>${sanitise(s.section)}</td>
+            <td class="mono text-xs text-emerald-600">${sanitise(s.schedule)}</td>
+            <td class="text-center"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">Active</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // My Subjects table (full list)
+        const subjTbody = document.getElementById('subjects-tbody');
+        subjTbody.innerHTML = '';
+        assignedSubjects.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(s.code)}</td>
+            <td>${sanitise(s.name)}</td>
+            <td>${s.class}</td>
+            <td>${sanitise(s.section)}</td>
+            <td class="mono text-xs text-emerald-600">${sanitise(s.schedule)}</td>
+            <td class="text-slate-500">${sanitise(s.room)}</td>
+          `;
+          subjTbody.appendChild(tr);
+        });
+
+        // Update overview counts
+        document.getElementById('ov-subjects').textContent = assignedSubjects.length;
+        // For total students, we'll sum later when we load students for each subject
+        // For now, placeholder
+        document.getElementById('ov-students').textContent = '0';
+        document.getElementById('ov-att').textContent = '0%';
+        document.getElementById('ov-pending').textContent = '0';
+      }
+
+      // ---------- LOAD STUDENTS FOR ATTENDANCE ----------
+      function loadAttendanceStudents(subjectCode) {
+        // In production, fetch from /api/teacher/subject-students?subject_code=XXX
+        // Simulate dummy students
+        const dummyStudents = [
+          { roll: 'UMS/22/CS/001', name: 'Aarav Sharma', attPct: 92 },
+          { roll: 'UMS/22/CS/002', name: 'Priya Gupta', attPct: 78 },
+          { roll: 'UMS/22/CS/003', name: 'Rohit Verma', attPct: 65 },
+          { roll: 'UMS/22/CS/004', name: 'Ananya Singh', attPct: 88 },
+          { roll: 'UMS/22/CS/005', name: 'Karan Mehta', attPct: 95 },
+          { roll: 'UMS/22/CS/006', name: 'Deepika Patel', attPct: 72 },
+          { roll: 'UMS/22/CS/007', name: 'Arjun Nair', attPct: 55 },
+          { roll: 'UMS/22/CS/008', name: 'Sneha Iyer', attPct: 84 }
+        ];
+        currentStudents = dummyStudents;
+        renderAttendanceTable(dummyStudents);
+        // Also update total students count (unique across subjects – simplified)
+        // For demo, we just count the first subject's students
+        document.getElementById('ov-students').textContent = dummyStudents.length;
+      }
+
+      function renderAttendanceTable(students) {
+        const tbody = document.getElementById('att-tbody');
+        tbody.innerHTML = '';
+        if (!students || students.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400">No students enrolled</td></tr>';
+          return;
+        }
+        // We'll store student indices for checkboxes
+        students.forEach((s, i) => {
+          const pct = s.attPct || 0;
+          const col = pct >= 75 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
+          const badge = pct >= 75 ?
+            '<span class="badge-ok">OK</span>' :
+            pct >= 60 ?
+            '<span class="badge-low">LOW</span>' :
+            '<span class="badge-crit">CRITICAL</span>';
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(s.roll)}</td>
+            <td>${sanitise(s.name)}</td>
+            <td class="text-center"><input type="checkbox" class="checkbox-att" data-idx="${i}" /></td>
+            <td class="text-center text-slate-500">—</td>
+            <td class="text-center font-bold" style="color:${col}">${pct}%</td>
+            <td class="text-center">${badge}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        // Set date to today
+        document.getElementById('att-date').value = new Date().toISOString().slice(0, 10);
+      }
+
+      // ---------- LOAD STUDENTS FOR MARKS ----------
+      function loadMarksStudents(subjectCode) {
+        // For marks, we can reuse the same student list
+        // In production, you might fetch marks data as well
+        const dummyStudents = [
+          { roll: 'UMS/22/CS/001', name: 'Aarav Sharma' },
+          { roll: 'UMS/22/CS/002', name: 'Priya Gupta' },
+          { roll: 'UMS/22/CS/003', name: 'Rohit Verma' },
+          { roll: 'UMS/22/CS/004', name: 'Ananya Singh' },
+          { roll: 'UMS/22/CS/005', name: 'Karan Mehta' },
+          { roll: 'UMS/22/CS/006', name: 'Deepika Patel' },
+          { roll: 'UMS/22/CS/007', name: 'Arjun Nair' },
+          { roll: 'UMS/22/CS/008', name: 'Sneha Iyer' }
+        ];
+        renderMarksTable(dummyStudents);
+      }
+
+      function renderMarksTable(students) {
+        const tbody = document.getElementById('marks-tbody');
+        tbody.innerHTML = '';
+        if (!students || students.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400">No students enrolled</td></tr>';
+          return;
+        }
+        students.forEach((s, i) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(s.roll)}</td>
+            <td>${sanitise(s.name)}</td>
+            <td class="text-center">
+              <div>
+                <input type="number" class="marks-input int-input" data-idx="${i}" min="0" max="30" placeholder="0–30" />
+                <p class="val-err" id="int-err-${i}">0–30 only</p>
               </div>
-              <p class="text-slate-700 mt-1">${sanitise(b.message)}</p>
-              ${imageHtml}
-            `;
-            feed.appendChild(div);
+            </td>
+            <td class="text-center">
+              <div>
+                <input type="number" class="marks-input ext-input" data-idx="${i}" min="0" max="70" placeholder="0–70" />
+                <p class="val-err" id="ext-err-${i}">0–70 only</p>
+              </div>
+            </td>
+            <td class="text-center font-bold" id="total-${i}">—</td>
+            <td class="text-center" id="val-status-${i}"><span class="text-slate-400 text-xs">Pending</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Attach validation listeners
+        document.querySelectorAll('.int-input').forEach(inp => {
+          inp.addEventListener('input', function() {
+            const idx = this.dataset.idx;
+            const v = parseFloat(this.value);
+            const errEl = document.getElementById('int-err-' + idx);
+            if (isNaN(v) || v < 0 || v > 30) {
+              this.classList.add('invalid');
+              this.classList.remove('valid');
+              errEl.classList.add('show');
+              updateTotalAndStatus(idx, 'invalid');
+            } else {
+              this.classList.remove('invalid');
+              this.classList.add('valid');
+              errEl.classList.remove('show');
+              updateTotalAndStatus(idx, 'check');
+            }
           });
-          // Attach edit/delete events
-          document.querySelectorAll('.edit-broadcast-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-              const id = this.dataset.id;
-              const msg = this.dataset.msg;
-              const image = this.dataset.image;
-              const type = this.dataset.type;
-              const newMsg = prompt('Edit message:', msg);
-              if (newMsg !== null) {
-                updateBroadcast(id, { message: newMsg, image_url: image, type: type });
-              }
-            });
+        });
+        document.querySelectorAll('.ext-input').forEach(inp => {
+          inp.addEventListener('input', function() {
+            const idx = this.dataset.idx;
+            const v = parseFloat(this.value);
+            const errEl = document.getElementById('ext-err-' + idx);
+            if (isNaN(v) || v < 0 || v > 70) {
+              this.classList.add('invalid');
+              this.classList.remove('valid');
+              errEl.classList.add('show');
+              updateTotalAndStatus(idx, 'invalid');
+            } else {
+              this.classList.remove('invalid');
+              this.classList.add('valid');
+              errEl.classList.remove('show');
+              updateTotalAndStatus(idx, 'check');
+            }
           });
-          document.querySelectorAll('.delete-broadcast-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-              if (confirm('Delete this broadcast?')) {
-                deleteBroadcast(this.dataset.id);
-              }
-            });
-          });
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('teacher-broadcast-feed').innerHTML = '<p class="text-rose-500 text-sm">Failed to load broadcasts.</p>';
         });
       }
 
-      function createBroadcast(message, image_url, type) {
-        const token = sessionStorage.getItem('cms_token');
-        fetch('/api/broadcasts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify({ message, image_url, type })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.message) {
-            alert('Broadcast sent!');
-            loadTeacherBroadcasts();
-            // Clear form
-            document.getElementById('teacher-broadcast-msg').value = '';
-            document.getElementById('teacher-broadcast-image').value = '';
-          }
-        })
-        .catch(err => alert('Failed to send broadcast.'));
+      function updateTotalAndStatus(idx, hint) {
+        const intEl = document.querySelector('.int-input[data-idx="' + idx + '"]');
+        const extEl = document.querySelector('.ext-input[data-idx="' + idx + '"]');
+        const totEl = document.getElementById('total-' + idx);
+        const statEl = document.getElementById('val-status-' + idx);
+        const iv = parseFloat(intEl.value);
+        const ev = parseFloat(extEl.value);
+        const intOk = !isNaN(iv) && iv >= 0 && iv <= 30;
+        const extOk = !isNaN(ev) && ev >= 0 && ev <= 70;
+        if (intOk && extOk) {
+          const total = iv + ev;
+          totEl.textContent = total;
+          totEl.style.color = '#1e293b';
+          statEl.innerHTML = '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-bold">✓ Valid</span>';
+        } else {
+          totEl.textContent = '—';
+          totEl.style.color = '#94a3b8';
+          statEl.innerHTML = '<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full text-xs font-bold">✗ Invalid</span>';
+        }
       }
 
-      function updateBroadcast(id, updates) {
-        const token = sessionStorage.getItem('cms_token');
-        fetch(`/api/broadcasts/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify(updates)
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.message) {
-            alert('Broadcast updated!');
-            loadTeacherBroadcasts();
-          }
-        })
-        .catch(err => alert('Failed to update broadcast.'));
-      }
-
-      function deleteBroadcast(id) {
-        const token = sessionStorage.getItem('cms_token');
-        fetch(`/api/broadcasts/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.message) {
-            alert('Broadcast deleted.');
-            loadTeacherBroadcasts();
-          }
-        })
-        .catch(err => alert('Failed to delete broadcast.'));
-      }
-
-      // Submit new broadcast
-      document.getElementById('teacher-broadcast-submit').addEventListener('click', function() {
-        const msg = document.getElementById('teacher-broadcast-msg').value.trim();
-        const image = document.getElementById('teacher-broadcast-image').value.trim();
-        const type = document.getElementById('teacher-broadcast-type').value;
-        if (!msg && !image) { alert('Please enter a message or image URL.'); return; }
-        createBroadcast(msg, image || null, type);
+      // ---------- SELECT ALL BUTTON ----------
+      document.getElementById('select-all-btn').addEventListener('click', function() {
+        const cbs = document.querySelectorAll('.checkbox-att');
+        const allChecked = Array.from(cbs).every(cb => cb.checked);
+        cbs.forEach(cb => cb.checked = !allChecked);
+        this.textContent = allChecked ? 'Select All' : 'Deselect All';
       });
 
-      // ─── Navigation (overwrite switchPane to load broadcasts) ───
+      // ---------- SUBMIT ATTENDANCE ----------
+      document.getElementById('submit-att-btn').addEventListener('click', function() {
+        const subjectCode = document.getElementById('att-subject-sel').value;
+        if (!subjectCode) {
+          showToast('Please select a subject.', 'warn');
+          return;
+        }
+        const date = document.getElementById('att-date').value;
+        if (!date) {
+          showToast('Please select a date.', 'warn');
+          return;
+        }
+        const cbs = document.querySelectorAll('.checkbox-att');
+        const records = [];
+        cbs.forEach(cb => {
+          const idx = parseInt(cb.dataset.idx);
+          if (!isNaN(idx) && idx >= 0 && idx < currentStudents.length) {
+            records.push({
+              roll: currentStudents[idx].roll,
+              present: cb.checked
+            });
+          }
+        });
+        if (records.length === 0) {
+          showToast('No students found to mark attendance.', 'warn');
+          return;
+        }
+        const payload = {
+          subject_code: subjectCode,
+          date: date,
+          records: records
+        };
+        console.log('Attendance payload:', payload);
+
+        // Send POST request
+        const btn = this;
+        const spin = document.getElementById('att-spin');
+        btn.disabled = true;
+        spin.classList.remove('hidden');
+
+        fetch('/api/admin/update-attendance', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(res => {
+          if (res.ok) {
+            showToast('Attendance submitted successfully.', 'success');
+          } else {
+            return res.json().then(d => { throw new Error(d.message || 'Submission failed'); });
+          }
+        })
+        .catch(err => {
+          showToast(err.message || 'Submission failed. Please try again.', 'error');
+        })
+        .finally(() => {
+          btn.disabled = false;
+          spin.classList.add('hidden');
+        });
+      });
+
+      // ---------- PREVIEW ATTENDANCE PAYLOAD ----------
+      document.getElementById('preview-att-btn').addEventListener('click', function() {
+        const subjectCode = document.getElementById('att-subject-sel').value;
+        if (!subjectCode) { showToast('Select a subject first.', 'warn'); return; }
+        const date = document.getElementById('att-date').value || new Date().toISOString().slice(0, 10);
+        const cbs = document.querySelectorAll('.checkbox-att');
+        const records = [];
+        cbs.forEach(cb => {
+          const idx = parseInt(cb.dataset.idx);
+          if (!isNaN(idx) && idx >= 0 && idx < currentStudents.length) {
+            records.push({ roll: currentStudents[idx].roll, present: cb.checked });
+          }
+        });
+        const payload = { subject_code: subjectCode, date, records };
+        document.getElementById('att-payload-preview').textContent = JSON.stringify(payload, null, 2);
+      });
+
+      // ---------- SUBMIT MARKS ----------
+      document.getElementById('submit-marks-btn').addEventListener('click', function() {
+        const subjectCode = document.getElementById('marks-subject-sel').value;
+        if (!subjectCode) {
+          showToast('Please select a subject.', 'warn');
+          return;
+        }
+        const examType = document.getElementById('marks-exam-type').value;
+        const inputs = document.querySelectorAll('.int-input, .ext-input');
+        let grades = [];
+        let valid = true;
+        // We need to group by student index
+        const studentMap = {};
+        document.querySelectorAll('.int-input').forEach(inp => {
+          const idx = inp.dataset.idx;
+          const v = parseFloat(inp.value);
+          if (isNaN(v) || v < 0 || v > 30) valid = false;
+          if (!studentMap[idx]) studentMap[idx] = {};
+          studentMap[idx].internal = isNaN(v) ? null : v;
+        });
+        document.querySelectorAll('.ext-input').forEach(inp => {
+          const idx = inp.dataset.idx;
+          const v = parseFloat(inp.value);
+          if (isNaN(v) || v < 0 || v > 70) valid = false;
+          if (!studentMap[idx]) studentMap[idx] = {};
+          studentMap[idx].external = isNaN(v) ? null : v;
+        });
+        if (!valid) {
+          showToast('Please fix validation errors (marks out of range).', 'error');
+          return;
+        }
+        // Build grades array
+        for (const idx in studentMap) {
+          const s = studentMap[idx];
+          if (s.internal !== null && s.external !== null) {
+            grades.push({
+              roll: currentStudents[idx].roll,
+              internal: s.internal,
+              external: s.external
+            });
+          }
+        }
+        if (grades.length === 0) {
+          showToast('No valid marks entered.', 'warn');
+          return;
+        }
+        const payload = {
+          subject_code: subjectCode,
+          exam_type: examType,
+          grades: grades
+        };
+        console.log('Marks payload:', payload);
+
+        const btn = this;
+        const spin = document.getElementById('marks-spin');
+        btn.disabled = true;
+        spin.classList.remove('hidden');
+
+        fetch('/api/teacher/modify-grades', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(res => {
+          if (res.ok) {
+            showToast('Marks submitted successfully for ' + grades.length + ' students.', 'success');
+          } else {
+            return res.json().then(d => { throw new Error(d.message || 'Submission failed'); });
+          }
+        })
+        .catch(err => {
+          showToast(err.message || 'Submission failed. Please try again.', 'error');
+        })
+        .finally(() => {
+          btn.disabled = false;
+          spin.classList.add('hidden');
+        });
+      });
+
+      // ---------- PREVIEW MARKS PAYLOAD ----------
+      document.getElementById('preview-marks-btn').addEventListener('click', function() {
+        const subjectCode = document.getElementById('marks-subject-sel').value;
+        if (!subjectCode) { showToast('Select a subject first.', 'warn'); return; }
+        const examType = document.getElementById('marks-exam-type').value;
+        // Build dummy grades based on current inputs
+        const grades = [];
+        document.querySelectorAll('.int-input').forEach(inp => {
+          const idx = inp.dataset.idx;
+          const extEl = document.querySelector('.ext-input[data-idx="' + idx + '"]');
+          const iv = parseFloat(inp.value);
+          const ev = parseFloat(extEl.value);
+          if (!isNaN(iv) && !isNaN(ev) && iv >= 0 && iv <= 30 && ev >= 0 && ev <= 70) {
+            grades.push({
+              roll: currentStudents[idx].roll,
+              internal: iv,
+              external: ev
+            });
+          }
+        });
+        const payload = { subject_code: subjectCode, exam_type: examType, grades };
+        document.getElementById('marks-payload-preview').textContent = JSON.stringify(payload, null, 2);
+      });
+
+      // ---------- EVENT LISTENERS FOR SUBJECT DROPDOWNS ----------
+      document.getElementById('att-subject-sel').addEventListener('change', function() {
+        const code = this.value;
+        if (code) {
+          loadAttendanceStudents(code);
+        } else {
+          document.getElementById('att-tbody').innerHTML =
+            '<tr><td colspan="6" class="text-center text-slate-400">Select a subject to load students</td></tr>';
+        }
+      });
+
+      document.getElementById('marks-subject-sel').addEventListener('change', function() {
+        const code = this.value;
+        if (code) {
+          loadMarksStudents(code);
+        } else {
+          document.getElementById('marks-tbody').innerHTML =
+            '<tr><td colspan="6" class="text-center text-slate-400">Select a subject to load students</td></tr>';
+        }
+      });
+
+      // ---------- NAVIGATION ----------
       const paneMap = {
         overview: { pane: 'pane-overview', title: 'Overview', sub: 'Faculty Management Console' },
         attendance: { pane: 'pane-attendance', title: 'Mark Attendance', sub: 'Attendance Grid – Secure Submit' },
         marks: { pane: 'pane-marks', title: 'Enter Marks', sub: 'Boundary Validated Marks Entry' },
-        courses: { pane: 'pane-courses', title: 'My Courses', sub: 'Access Controlled Course List' },
-        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
+        subjects: { pane: 'pane-subjects', title: 'My Subjects', sub: 'Access Controlled Subject List' }
       };
+
       function switchPane(k) {
         const d = paneMap[k];
         if (!d) return;
         document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
         document.getElementById(d.pane).classList.add('active');
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        const btn = document.querySelector('[data-pane="'+k+'"]');
+        const btn = document.querySelector('[data-pane="' + k + '"]');
         if (btn) btn.classList.add('active');
         document.getElementById('page-title').textContent = d.title;
         document.getElementById('page-sub').textContent = d.sub;
-        // Load broadcasts if pane is broadcasts
-        if (k === 'broadcasts') {
-          loadTeacherBroadcasts();
-        }
       }
+
       document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
         btn.addEventListener('click', function() {
           switchPane(this.getAttribute('data-pane'));
@@ -351,6 +794,7 @@
           document.getElementById('sb-overlay').classList.add('hidden');
         }, false);
       });
+
       document.getElementById('menu-btn').addEventListener('click', function() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('sb-overlay').classList.remove('hidden');
@@ -360,14 +804,28 @@
         document.getElementById('sb-overlay').classList.add('hidden');
       }, false);
 
-      // ─── Other functions (logout, timer, etc.) ───
-      function showToast(msg,type){ const el=document.getElementById('toast'); const cl={error:'bg-rose-600 text-white',success:'bg-emerald-600 text-white',info:'bg-indigo-600 text-white',warn:'bg-amber-500 text-white'}; el.className='toast '+(cl[type]||cl.info); el.textContent=msg; void el.offsetWidth; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4000); }
-      function secureLogout(reason){ sessionStorage.clear(); if(reason) alert('SECURITY: '+reason); window.location.replace('index.html'); }
-      document.getElementById('logout-btn').addEventListener('click', function(){ if(confirm('Log out securely?')) secureLogout(); });
+      // ---------- INIT ----------
+      loadAssignedSubjects();
 
-      (function timer(){ function upd(){ const el=Date.now()-loginTS, s=Math.floor(el/1000)%60, m=Math.floor(el/60000)%60, h=Math.floor(el/3600000); document.getElementById('session-timer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(el>SESSION_TTL) secureLogout('Session timed out.'); } upd(); setInterval(upd,1000); })();
+      // If a subject is already selected (e.g., from initial load), load students for the first subject
+      // We'll set default to first subject after load
+      setTimeout(() => {
+        const attSel = document.getElementById('att-subject-sel');
+        if (attSel.options.length > 1) {
+          attSel.value = attSel.options[1].value;
+          attSel.dispatchEvent(new Event('change'));
+        }
+        const marksSel = document.getElementById('marks-subject-sel');
+        if (marksSel.options.length > 1) {
+          marksSel.value = marksSel.options[1].value;
+          marksSel.dispatchEvent(new Event('change'));
+        }
+      }, 100);
 
-      window.addEventListener('pageshow', function(e){ if(e.persisted&&!sessionStorage.getItem('cms_token')) window.location.replace('index.html'); }, false);
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted && !sessionStorage.getItem('cms_token')) window.location.replace('index.html');
+      }, false);
+
     })();
   </script>
 </body>

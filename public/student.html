@@ -11,7 +11,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" />
   <style>
-    /* Same styles as before – include all needed classes */
     * { box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
     .mono { font-family: 'JetBrains Mono', monospace; }
@@ -42,7 +41,7 @@
     .grade-A { background:#d1fae5; color:#065f46; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; }
     .grade-B { background:#dbeafe; color:#1e40af; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; }
     .grade-C { background:#fef3c7; color:#92400e; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; }
-    .grade-F { background:#fee2e2; color:#991b1b; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+    .grade-D { background:#fee2e2; color:#991b1b; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; }
     .toast { position:fixed; top:18px; right:18px; z-index:9999; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:500; opacity:0; transform:translateX(50px); transition:opacity .3s,transform .3s; pointer-events:none; max-width:320px; box-shadow:0 8px 30px rgba(0,0,0,.12); }
     .toast.show { opacity:1; transform:translateX(0); }
     .mismatch-box { background:#fff5f5; border:1.5px solid #fecaca; border-radius:12px; }
@@ -67,7 +66,7 @@
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <p class="text-slate-500 text-xs mb-4">Send a message to all active student sessions. This action is logged.</p>
+      <p class="text-slate-500 text-xs mb-4">Share a message with all students. This action is logged.</p>
       <textarea id="broadcast-message" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none" rows="4" placeholder="Type your broadcast message…" maxlength="500"></textarea>
       <div class="flex justify-end gap-3 mt-4">
         <button id="broadcast-cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
@@ -104,7 +103,7 @@
       <button class="nav-link" data-pane="attendance"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Attendance</button>
       <button class="nav-link" data-pane="marksheet"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Mark Sheet</button>
       <button class="nav-link" data-pane="session"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>Session Security Log</button>
-      <button class="nav-link" data-pane="semester"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Active Semester</button>
+      <button class="nav-link" data-pane="class"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>My Class</button>
     </nav>
     <div class="px-3 py-4 border-t border-slate-100 space-y-1">
       <button id="broadcast-btn" class="nav-link text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>Broadcast</button>
@@ -143,31 +142,82 @@
       <!-- PANE: OVERVIEW -->
       <div class="pane active" id="pane-overview">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="stat-card p-4"><div class="flex items-center justify-between mb-2"><p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Attendance</p><div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center"><svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg></div></div><p class="text-2xl font-extrabold text-slate-800" id="ov-att">78%</p><p class="text-xs text-amber-600 font-medium mt-0.5">⚠ Below 80% threshold</p></div>
-          <div class="stat-card p-4"><div class="flex items-center justify-between mb-2"><p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">SGPA</p><div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center"><svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div></div><p class="text-2xl font-extrabold text-emerald-600" id="ov-sgpa">8.4</p><p class="text-xs text-slate-400 mt-0.5">Sem 5 · 2024–25</p></div>
-          <div class="stat-card p-4"><div class="flex items-center justify-between mb-2"><p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Credits</p><div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center"><svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg></div></div><p class="text-2xl font-extrabold text-slate-800">132</p><p class="text-xs text-slate-400 mt-0.5">of 180 total</p></div>
-          <div class="stat-card p-4"><div class="flex items-center justify-between mb-2"><p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Subjects</p><div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center"><svg class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></div></div><p class="text-2xl font-extrabold text-violet-600">6</p><p class="text-xs text-slate-400 mt-0.5">Semester 5</p></div>
+          <div class="stat-card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Attendance</p>
+              <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+              </div>
+            </div>
+            <p class="text-2xl font-extrabold text-slate-800" id="ov-att">0%</p>
+            <p class="text-xs text-amber-600 font-medium mt-0.5" id="ov-att-status">Loading…</p>
+          </div>
+          <div class="stat-card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Overall %</p>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              </div>
+            </div>
+            <p class="text-2xl font-extrabold text-emerald-600" id="ov-pct">0%</p>
+            <p class="text-xs text-slate-400 mt-0.5">All subjects</p>
+          </div>
+          <div class="stat-card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Subjects</p>
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </div>
+            </div>
+            <p class="text-2xl font-extrabold text-slate-800" id="ov-subjects">0</p>
+            <p class="text-xs text-slate-400 mt-0.5">Enrolled</p>
+          </div>
+          <div class="stat-card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 text-xs font-semibold uppercase tracking-wide">Class</p>
+              <div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                <svg class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+            </div>
+            <p class="text-2xl font-extrabold text-violet-600" id="ov-class">—</p>
+            <p class="text-xs text-slate-400 mt-0.5">Section <span id="ov-section">—</span></p>
+          </div>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-5">
+          <!-- Profile -->
           <div class="card p-5 lg:col-span-2">
-            <div class="flex items-center justify-between mb-4"><h2 class="text-slate-800 font-bold text-sm">Student Profile</h2><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">Enrolled</span></div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-slate-800 font-bold text-sm">Student Profile</h2>
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">Active</span>
+            </div>
             <div class="grid sm:grid-cols-2 gap-x-6 gap-y-4">
               <div><p class="text-slate-400 text-xs mb-0.5">Full Name</p><p class="text-slate-800 text-sm font-semibold" id="p-name">—</p></div>
-              <div><p class="text-slate-400 text-xs mb-0.5">Encrypted Student ID</p><p class="enc-id text-sm" id="p-enc-id">••••••••••••</p></div>
-              <div><p class="text-slate-400 text-xs mb-0.5">Programme</p><p class="text-slate-700 text-sm">B.Tech – Computer Science</p></div>
-              <div><p class="text-slate-400 text-xs mb-0.5">Batch</p><p class="text-slate-700 text-sm">2022–2026</p></div>
-              <div><p class="text-slate-400 text-xs mb-0.5">Section</p><p class="text-slate-700 text-sm">CS-A</p></div>
-              <div><p class="text-slate-400 text-xs mb-0.5">Roll No.</p><p class="text-slate-700 text-sm mono" id="p-roll">VID/22/CS/—</p></div>
+              <div><p class="text-slate-400 text-xs mb-0.5">Encrypted ID</p><p class="enc-id text-sm" id="p-enc-id">••••••••••••</p></div>
+              <div><p class="text-slate-400 text-xs mb-0.5">Class</p><p class="text-slate-700 text-sm" id="p-class">—</p></div>
+              <div><p class="text-slate-400 text-xs mb-0.5">Section</p><p class="text-slate-700 text-sm" id="p-section">—</p></div>
+              <div><p class="text-slate-400 text-xs mb-0.5">Roll No.</p><p class="text-slate-700 text-sm mono" id="p-roll">—</p></div>
+              <div><p class="text-slate-400 text-xs mb-0.5">Academic Year</p><p class="text-slate-700 text-sm">2024–25</p></div>
             </div>
           </div>
+
+          <!-- Attendance Circle -->
           <div class="card p-5 flex flex-col items-center justify-center text-center">
             <p class="text-slate-600 text-sm font-semibold mb-4">Overall Attendance</p>
             <div class="circle-wrap mb-3">
-              <svg viewBox="0 0 120 120" width="120" height="120"><circle class="circle-bg" cx="60" cy="60" r="50"></circle><circle class="circle-prog" id="att-circle" cx="60" cy="60" r="50" stroke="#6366f1" stroke-dasharray="314.16" stroke-dashoffset="314.16"></circle></svg>
-              <div class="circle-text"><span class="text-2xl font-extrabold text-slate-800" id="att-pct-text">0%</span><span class="text-xs text-slate-400">Present</span></div>
+              <svg viewBox="0 0 120 120" width="120" height="120">
+                <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="circle-prog" id="att-circle" cx="60" cy="60" r="50" stroke="#6366f1" stroke-dasharray="314.16" stroke-dashoffset="314.16"></circle>
+              </svg>
+              <div class="circle-text">
+                <span class="text-2xl font-extrabold text-slate-800" id="att-pct-text">0%</span>
+                <span class="text-xs text-slate-400">Present</span>
+              </div>
             </div>
-            <div class="flex gap-5 text-xs"><div><span class="text-emerald-600 font-bold text-sm" id="att-present">0</span><br/><span class="text-slate-400">Present</span></div><div><span class="text-rose-600 font-bold text-sm" id="att-absent">0</span><br/><span class="text-slate-400">Absent</span></div></div>
+            <div class="flex gap-5 text-xs">
+              <div><span class="text-emerald-600 font-bold text-sm" id="att-present">0</span><br/><span class="text-slate-400">Present</span></div>
+              <div><span class="text-rose-600 font-bold text-sm" id="att-absent">0</span><br/><span class="text-slate-400">Absent</span></div>
+            </div>
           </div>
         </div>
 
@@ -183,112 +233,464 @@
       <!-- PANE: ATTENDANCE -->
       <div class="pane" id="pane-attendance">
         <div class="card overflow-hidden">
-          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between"><h2 class="text-slate-800 font-bold text-sm">Subject-wise Attendance</h2><span class="text-slate-400 text-xs mono bg-slate-50 px-2.5 py-1 rounded-lg">Semester 5 · 2024–25</span></div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Subject Code</th><th>Subject</th><th class="text-right">Total</th><th class="text-right">Present</th><th class="text-right">Absent</th><th class="text-right">%</th><th>Status</th></tr></thead><tbody id="att-tbody"></tbody></table></div>
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">Subject-wise Attendance</h2>
+            <span class="text-slate-400 text-xs mono bg-slate-50 px-2.5 py-1 rounded-lg">Current Class</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Subject Code</th><th>Subject</th><th class="text-right">Total</th><th class="text-right">Present</th><th class="text-right">Absent</th><th class="text-right">%</th><th>Status</th></tr></thead>
+              <tbody id="att-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- PANE: MARKSHEET -->
       <div class="pane" id="pane-marksheet">
         <div class="card overflow-hidden">
-          <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3"><h2 class="text-slate-800 font-bold text-sm">Official Mark Sheet</h2><div class="flex gap-2"><span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-2.5 py-0.5 rounded-full">Semester 5</span><span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full" id="sgpa-badge">SGPA: —</span></div></div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Code</th><th>Subject</th><th class="text-right">Int.</th><th class="text-right">Ext.</th><th class="text-right">Total</th><th class="text-right">Credits</th><th class="text-center">Grade</th><th class="text-right">Points</th></tr></thead><tbody id="marks-tbody"></tbody><tfoot><tr style="background:#f8fafc;"><td colspan="5" style="padding:10px 16px;color:#64748b;font-size:12px;font-weight:700;">Total Credits</td><td style="padding:10px 16px;text-align:right;color:#1e293b;font-weight:700;font-size:13px;" id="total-credits">—</td><td colspan="2" style="padding:10px 16px;text-align:right;color:#059669;font-weight:700;font-size:13px;" id="sgpa-display">SGPA: —</td></tr></tfoot></table></div>
+          <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-slate-800 font-bold text-sm">Mark Sheet</h2>
+            <div class="flex gap-2">
+              <span class="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold px-2.5 py-0.5 rounded-full">Current Class</span>
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full" id="overall-badge">Overall: —</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Code</th><th>Subject</th><th class="text-right">Internal</th><th class="text-right">External</th><th class="text-right">Total</th><th class="text-right">%</th><th class="text-center">Grade</th></tr></thead>
+              <tbody id="marks-tbody"></tbody>
+              <tfoot>
+                <tr style="background:#f8fafc;">
+                  <td colspan="5" style="padding:10px 16px;color:#64748b;font-size:12px;font-weight:700;">Overall Percentage</td>
+                  <td style="padding:10px 16px;text-align:right;color:#059669;font-weight:700;font-size:13px;" id="overall-pct">0%</td>
+                  <td style="padding:10px 16px;text-align:center;font-weight:700;font-size:13px;" id="overall-grade">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- PANE: SESSION -->
       <div class="pane" id="pane-session">
         <div class="card overflow-hidden mb-5">
-          <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2"><svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg><h2 class="text-slate-800 font-bold text-sm">Device Session Verification Log</h2></div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Field</th><th>Registered (Login)</th><th>Current Session</th><th class="text-center">Match</th></tr></thead><tbody id="session-tbody"></tbody></table></div>
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            <h2 class="text-slate-800 font-bold text-sm">Device Session Verification Log</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Field</th><th>Registered (Login)</th><th>Current Session</th><th class="text-center">Match</th></tr></thead>
+              <tbody id="session-tbody"></tbody>
+            </table>
+          </div>
         </div>
-        <div class="card p-5"><p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">Device Fingerprint Hashes</p><div class="grid sm:grid-cols-2 gap-4"><div class="bg-slate-50 rounded-lg p-3"><p class="text-slate-400 text-xs mb-1">Login Fingerprint</p><p class="mono text-xs text-indigo-600 break-all" id="fp-login">—</p></div><div class="bg-emerald-50 rounded-lg p-3"><p class="text-slate-400 text-xs mb-1">Current Fingerprint</p><p class="mono text-xs text-emerald-700 break-all" id="fp-current">—</p></div></div></div>
+        <div class="card p-5">
+          <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">Device Fingerprint Hashes</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="bg-slate-50 rounded-lg p-3"><p class="text-slate-400 text-xs mb-1">Login Fingerprint</p><p class="mono text-xs text-indigo-600 break-all" id="fp-login">—</p></div>
+            <div class="bg-emerald-50 rounded-lg p-3"><p class="text-slate-400 text-xs mb-1">Current Fingerprint</p><p class="mono text-xs text-emerald-700 break-all" id="fp-current">—</p></div>
+          </div>
+        </div>
       </div>
 
-      <!-- PANE: SEMESTER -->
-      <div class="pane" id="pane-semester">
+      <!-- PANE: CLASS -->
+      <div class="pane" id="pane-class">
         <div class="card p-6 mb-5">
-          <div class="flex flex-wrap items-center gap-3 mb-5"><div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center"><svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div><div class="flex-1"><h2 class="text-slate-800 font-bold text-base">Semester 5 – Currently Active</h2><p class="text-slate-400 text-xs">Academic Year 2024–25 · July – November</p></div><span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">ACTIVE</span></div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"><div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Start Date</p><p class="text-slate-800 text-sm font-bold">01 July 2024</p></div><div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">End Date</p><p class="text-slate-800 text-sm font-bold">30 Nov 2024</p></div><div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Exam Window</p><p class="text-slate-800 text-sm font-bold">Dec 2024</p></div><div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Credits Registered</p><p class="text-slate-800 text-sm font-bold">24 Credits</p></div></div>
+          <div class="flex flex-wrap items-center gap-3 mb-5">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="flex-1">
+              <h2 class="text-slate-800 font-bold text-base" id="class-title">Class —</h2>
+              <p class="text-slate-400 text-xs" id="class-section">Section —</p>
+            </div>
+            <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">Enrolled</span>
+          </div>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Class</p><p class="text-slate-800 text-sm font-bold" id="class-number">—</p></div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Section</p><p class="text-slate-800 text-sm font-bold" id="section-name">—</p></div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Total Subjects</p><p class="text-slate-800 text-sm font-bold" id="total-subjects">0</p></div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100"><p class="text-slate-400 text-xs mb-1">Academic Year</p><p class="text-slate-800 text-sm font-bold">2024–25</p></div>
+          </div>
         </div>
-        <div class="card overflow-hidden"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-slate-800 font-bold text-sm">Subject Timetable</h3></div><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Code</th><th>Subject</th><th>Faculty</th><th class="text-right">Credits</th><th>Slot</th></tr></thead><tbody id="timetable-tbody"></tbody></table></div></div>
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100"><h3 class="text-slate-800 font-bold text-sm">Subject Timetable</h3></div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead><tr><th>Code</th><th>Subject</th><th>Teacher</th><th>Schedule</th><th>Room</th></tr></thead>
+              <tbody id="timetable-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
     </main>
   </div>
 
   <script>
     (function() {
       'use strict';
-      function sanitise(s) { if(typeof s!=='string') return ''; return s.replace(/</g,'').replace(/>/g,'').replace(/"/g,'').replace(/'/g,'').replace(/\//g,'').replace(/\\/g,'').replace(/`/g,'').replace(/\$/g,'').replace(/&/g,'&amp;').replace(/alert/gi,'').replace(/onerror/gi,'').replace(/onload/gi,'').replace(/script/gi,'').replace(/javascript:/gi,'').trim(); }
 
-      const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginFP=sessionStorage.getItem('cms_fp'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
-      if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
-      if(role&&role!=='student'){ const map={teacher:'teacher.html',admin:'admin.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
-      const SESSION_TTL=60*60*1000;
-      if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
+      // ---------- SANITISATION ----------
+      function sanitise(s) {
+        if (typeof s !== 'string') return '';
+        return s.replace(/</g, '').replace(/>/g, '').replace(/"/g, '').replace(/'/g, '').replace(/\//g, '').replace(/\\/g,
+          '').replace(/`/g, '').replace(/\$/g, '').replace(/&/g, '&amp;').replace(/alert/gi, '').replace(/onerror/gi, '')
+          .replace(/onload/gi, '').replace(/script/gi, '').replace(/javascript:/gi, '').trim();
+      }
 
-      function fnv1a(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(16).padStart(8,'0'); }
-      function simSHA256(d){ const salts=['9a3f','c7b2','e1d4','f8a0','b5c9','2e7f','d304','a1b8']; let r=''; for(let i=0;i<salts.length;i++) r+=fnv1a(salts[i]+d+salts[(i+3)%salts.length]+r); return r; }
-      function buildFP(){ const c=[]; c.push(screen.width+'x'+screen.height+'x'+screen.colorDepth); c.push(String(screen.pixelDepth||0)); c.push('tz:'+Intl.DateTimeFormat().resolvedOptions().timeZone); c.push(navigator.language||'unknown'); c.push(String(navigator.hardwareConcurrency||0)); c.push(String(navigator.maxTouchPoints||0)); c.push(navigator.platform||'unknown'); try{ const cv=document.createElement('canvas'); cv.width=200; cv.height=60; const ctx=cv.getContext('2d'); ctx.textBaseline='top'; ctx.font='14px Arial'; ctx.fillStyle='#4f46e5'; ctx.fillText('CMS-FP-ALP',2,2); ctx.fillStyle='#10b981'; ctx.fillRect(80,10,20,20); ctx.arc(100,30,10,0,Math.PI*2); ctx.stroke(); c.push(cv.toDataURL().slice(-40)); } catch(_){ c.push('canvas-blocked'); } c.push(String(navigator.plugins?navigator.plugins.length:0)); return simSHA256(c.join('|')); }
-      function maskId(u){ return simSHA256(u).slice(0,16).toUpperCase().match(/.{1,4}/g).join('-'); }
+      // ---------- AUTH / SESSION ----------
+      const token = sessionStorage.getItem('cms_token');
+      const role = sessionStorage.getItem('cms_role');
+      const username = sessionStorage.getItem('cms_user');
+      const loginFP = sessionStorage.getItem('cms_fp');
+      const loginTS = parseInt(sessionStorage.getItem('cms_login_ts') || '0', 10);
 
-      const safeUser=sanitise(username), encId=maskId(safeUser);
-      document.getElementById('sb-name').textContent=safeUser; document.getElementById('sb-avatar').textContent=safeUser.charAt(0).toUpperCase(); document.getElementById('sb-enc-id').textContent=encId.slice(0,9)+'…'; document.getElementById('p-name').textContent=safeUser; document.getElementById('p-enc-id').textContent=encId; document.getElementById('p-roll').textContent='UMS/22/CS/'+fnv1a(safeUser).toUpperCase().slice(0,4);
+      if (!token || !username) {
+        window.location.replace('index.html');
+        throw new Error('No token');
+      }
+      if (role && role !== 'student') {
+        const map = { teacher: 'teacher.html', admin: 'admin.html' };
+        window.location.replace(map[role] || 'index.html');
+        throw new Error('Wrong role');
+      }
+      const SESSION_TTL = 60 * 60 * 1000;
+      if (Date.now() - loginTS > SESSION_TTL) {
+        sessionStorage.clear();
+        window.location.replace('index.html');
+        throw new Error('Expired');
+      }
 
-      const attData=[{code:'CS501',subject:'Data Structures & Algorithms',total:48,present:44},{code:'CS502',subject:'Database Management Systems',total:44,present:38},{code:'CS503',subject:'Operating Systems',total:46,present:32},{code:'CS504',subject:'Computer Networks',total:42,present:36},{code:'CS505',subject:'Software Engineering',total:40,present:35},{code:'CS506',subject:'Machine Learning',total:38,present:30}];
-      let totP=0,totC=0; attData.forEach(r=>{ totP+=r.present; totC+=r.total; }); const oPct=Math.round((totP/totC)*100);
+      // ---------- FINGERPRINT ----------
+      function fnv1a(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619); } return (h >>> 0).toString(16).padStart(8, '0'); }
 
-      function animCircle(pct){ const circ=314.16, offset=circ-(pct/100)*circ; const el=document.getElementById('att-circle'); el.style.strokeDashoffset=circ; el.setAttribute('stroke',pct>=75?'#10b981':pct>=60?'#f59e0b':'#ef4444'); setTimeout(()=>{ el.style.strokeDashoffset=offset; document.getElementById('att-pct-text').textContent=pct+'%'; document.getElementById('att-present').textContent=totP; document.getElementById('att-absent').textContent=totC-totP; },300); }
-      animCircle(oPct); document.getElementById('ov-att').textContent=oPct+'%'; document.getElementById('ov-att').style.color=oPct>=75?'#059669':'#d97706';
+      function simSHA256(d) { const salts = ['9a3f', 'c7b2', 'e1d4', 'f8a0', 'b5c9', '2e7f', 'd304', 'a1b8']; let r = '';
+        for (let i = 0; i < salts.length; i++) r += fnv1a(salts[i] + d + salts[(i + 3) % salts.length] + r); return r; }
 
-      (function(){ const tb=document.getElementById('att-tbody'); tb.innerHTML=''; attData.forEach(r=>{ const pct=Math.round((r.present/r.total)*100); const col=pct>=75?'#059669':pct>=60?'#d97706':'#dc2626'; const badge=pct>=75?'<span class="badge-ok">OK</span>':pct>=60?'<span class="badge-low">LOW</span>':'<span class="badge-crit">CRITICAL</span>'; const tr=document.createElement('tr'); tr.innerHTML='<td class="mono" style="color:#6366f1;font-size:12px;">'+sanitise(r.code)+'</td><td>'+sanitise(r.subject)+'</td><td style="text-align:right;">'+r.total+'</td><td style="text-align:right;color:#059669;">'+r.present+'</td><td style="text-align:right;color:#dc2626;">'+(r.total-r.present)+'</td><td style="text-align:right;font-weight:700;color:'+col+';">'+pct+'%</td><td>'+badge+'</td>'; tb.appendChild(tr); }); })();
+      function buildFP() {
+        const c = [];
+        c.push(screen.width + 'x' + screen.height + 'x' + screen.colorDepth);
+        c.push(String(screen.pixelDepth || 0));
+        c.push('tz:' + Intl.DateTimeFormat().resolvedOptions().timeZone);
+        c.push(navigator.language || 'unknown');
+        c.push(String(navigator.hardwareConcurrency || 0));
+        c.push(String(navigator.maxTouchPoints || 0));
+        c.push(navigator.platform || 'unknown');
+        try {
+          const cv = document.createElement('canvas');
+          cv.width = 200;
+          cv.height = 60;
+          const ctx = cv.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillStyle = '#4f46e5';
+          ctx.fillText('CMS-FP-ALP', 2, 2);
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(80, 10, 20, 20);
+          ctx.arc(100, 30, 10, 0, Math.PI * 2);
+          ctx.stroke();
+          c.push(cv.toDataURL().slice(-40));
+        } catch (_) { c.push('canvas-blocked'); }
+        c.push(String(navigator.plugins ? navigator.plugins.length : 0));
+        return simSHA256(c.join('|'));
+      }
 
-      const marksData=[{code:'CS501',subject:'Data Structures & Algorithms',internal:28,external:62,credits:4,grade:'A',points:9},{code:'CS502',subject:'Database Management Systems',internal:25,external:58,credits:4,grade:'A',points:9},{code:'CS503',subject:'Operating Systems',internal:22,external:51,credits:4,grade:'B',points:8},{code:'CS504',subject:'Computer Networks',internal:24,external:55,credits:4,grade:'A',points:9},{code:'CS505',subject:'Software Engineering',internal:20,external:48,credits:3,grade:'B',points:8},{code:'CS506',subject:'Machine Learning',internal:18,external:44,credits:5,grade:'C',points:7}];
-      let totCred=0,wPts=0; marksData.forEach(r=>{ totCred+=r.credits; wPts+=r.points*r.credits; }); const sgpa=(wPts/totCred).toFixed(2);
-      (function(){ const tb=document.getElementById('marks-tbody'); tb.innerHTML=''; marksData.forEach(r=>{ const gr={'A':'grade-A','B':'grade-B','C':'grade-C','F':'grade-F'}[r.grade]||'grade-B'; const tr=document.createElement('tr'); tr.innerHTML='<td class="mono" style="color:#6366f1;font-size:12px;">'+sanitise(r.code)+'</td><td>'+sanitise(r.subject)+'</td><td style="text-align:right;">'+r.internal+'</td><td style="text-align:right;">'+r.external+'</td><td style="text-align:right;font-weight:700;">'+(r.internal+r.external)+'</td><td style="text-align:right;">'+r.credits+'</td><td style="text-align:center;"><span class="'+gr+'">'+sanitise(r.grade)+'</span></td><td style="text-align:right;font-family:monospace;color:#4f46e5;">'+r.points+'.0</td>'; tb.appendChild(tr); }); document.getElementById('total-credits').textContent=totCred; document.getElementById('sgpa-display').textContent='SGPA: '+sgpa; document.getElementById('sgpa-badge').textContent='SGPA: '+sgpa; document.getElementById('ov-sgpa').textContent=sgpa; })();
+      const currentFP = buildFP();
+      const curBrowser = navigator.userAgent.includes('Edg') ? 'Microsoft Edge' :
+        navigator.userAgent.includes('OPR') ? 'Opera' :
+        navigator.userAgent.includes('Chrome') ? 'Google Chrome' :
+        navigator.userAgent.includes('Firefox') ? 'Mozilla Firefox' :
+        navigator.userAgent.includes('Safari') ? 'Apple Safari' : 'Unknown Browser';
+      const curOS = navigator.userAgent.includes('Windows') ? 'Windows' :
+        navigator.userAgent.includes('Android') ? 'Android' :
+        navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad') ? 'iOS' :
+        navigator.userAgent.includes('Mac') ? 'macOS' :
+        navigator.userAgent.includes('Linux') ? 'Linux' : 'Unknown OS';
 
-      const ttData=[{code:'CS501',subject:'Data Structures & Algorithms',faculty:'Dr. R. Sharma',credits:4,slot:'Mon/Wed/Fri 09:00'},{code:'CS502',subject:'Database Management Systems',faculty:'Prof. A. Gupta',credits:4,slot:'Tue/Thu 10:30'},{code:'CS503',subject:'Operating Systems',faculty:'Dr. S. Verma',credits:4,slot:'Mon/Wed 12:00'},{code:'CS504',subject:'Computer Networks',faculty:'Prof. N. Singh',credits:4,slot:'Tue/Thu 14:00'},{code:'CS505',subject:'Software Engineering',faculty:'Dr. P. Mehta',credits:3,slot:'Fri 11:00'},{code:'CS506',subject:'Machine Learning',faculty:'Dr. K. Patel',credits:5,slot:'Mon/Wed/Fri 15:30'}];
-      (function(){ const tb=document.getElementById('timetable-tbody'); tb.innerHTML=''; ttData.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML='<td class="mono" style="color:#6366f1;font-size:12px;">'+sanitise(r.code)+'</td><td>'+sanitise(r.subject)+'</td><td style="color:#64748b;">'+sanitise(r.faculty)+'</td><td style="text-align:right;">'+r.credits+'</td><td class="mono" style="color:#059669;font-size:12px;">'+sanitise(r.slot)+'</td>'; tb.appendChild(tr); }); })();
+      // ---------- UI HELPERS ----------
+      function maskId(u) { return simSHA256(u).slice(0, 16).toUpperCase().match(/.{1,4}/g).join('-'); }
 
-      const currentFP=buildFP(); const curBrowser=navigator.userAgent.includes('Edg')?'Microsoft Edge':navigator.userAgent.includes('OPR')?'Opera':navigator.userAgent.includes('Chrome')?'Google Chrome':navigator.userAgent.includes('Firefox')?'Mozilla Firefox':navigator.userAgent.includes('Safari')?'Apple Safari':'Unknown Browser'; const curOS=navigator.userAgent.includes('Windows')?'Windows':navigator.userAgent.includes('Android')?'Android':navigator.userAgent.includes('iPhone')||navigator.userAgent.includes('iPad')?'iOS':navigator.userAgent.includes('Mac')?'macOS':navigator.userAgent.includes('Linux')?'Linux':'Unknown OS';
-      const sessionRows=[{field:'Browser',reg:curBrowser,cur:curBrowser},{field:'Operating System',reg:curOS,cur:curOS},{field:'Login Time',reg:new Date(loginTS).toLocaleString(),cur:new Date().toLocaleString()},{field:'Device Fingerprint',reg:loginFP?loginFP.slice(0,20)+'…':'N/A',cur:currentFP.slice(0,20)+'…'},{field:'Screen Resolution',reg:screen.width+'×'+screen.height,cur:screen.width+'×'+screen.height},{field:'Platform',reg:navigator.platform||'Unknown',cur:navigator.platform||'Unknown'}];
-      (function(){ const tb=document.getElementById('session-tbody'); tb.innerHTML=''; sessionRows.forEach(r=>{ const match=r.reg===r.cur; const badge=match?'<span class="badge-ok">✓ MATCH</span>':'<span class="badge-crit">✗ MISMATCH</span>'; const tr=document.createElement('tr'); tr.innerHTML='<td style="font-weight:600;color:#475569;">'+sanitise(r.field)+'</td><td class="mono" style="font-size:11px;color:#4f46e5;">'+sanitise(String(r.reg))+'</td><td class="mono" style="font-size:11px;color:#059669;">'+sanitise(String(r.cur))+'</td><td style="text-align:center;">'+badge+'</td>'; tb.appendChild(tr); }); document.getElementById('fp-login').textContent=loginFP||'N/A'; document.getElementById('fp-current').textContent=currentFP; })();
+      const safeUser = sanitise(username);
+      const encId = maskId(safeUser);
+      document.getElementById('sb-name').textContent = safeUser;
+      document.getElementById('sb-avatar').textContent = safeUser.charAt(0).toUpperCase();
+      document.getElementById('sb-enc-id').textContent = encId.slice(0, 9) + '…';
 
-      if(loginFP&&currentFP!==loginFP){ document.getElementById('mismatch-banner').classList.remove('hidden'); let cd=10; const t=setInterval(()=>{ cd--; document.getElementById('mismatch-msg').textContent='Fingerprint mismatch. Secure logout in '+cd+'s.'; if(cd<=0){ clearInterval(t); secureLogout('Device fingerprint mismatch.'); } },1000); }
+      // ---------- TOAST ----------
+      function showToast(msg, type) {
+        const el = document.getElementById('toast');
+        const cl = {
+          error: 'bg-rose-600 text-white',
+          success: 'bg-emerald-600 text-white',
+          info: 'bg-indigo-600 text-white'
+        };
+        el.className = 'toast ' + (cl[type] || cl.info);
+        el.textContent = msg;
+        void el.offsetWidth;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 4200);
+      }
 
-      function showToast(msg,type){ const el=document.getElementById('toast'); const cl={error:'bg-rose-600 text-white',success:'bg-emerald-600 text-white',info:'bg-indigo-600 text-white'}; el.className='toast '+(cl[type]||cl.info); el.textContent=msg; void el.offsetWidth; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4200); }
-      function secureLogout(reason){ sessionStorage.clear(); if(reason) alert('SECURITY: '+reason); window.location.replace('index.html'); }
-      document.getElementById('logout-btn').addEventListener('click', function(){ if(confirm('Securely log out?')) secureLogout(); });
-
-      (function timer(){ function upd(){ const el=Date.now()-loginTS, s=Math.floor(el/1000)%60, m=Math.floor(el/60000)%60, h=Math.floor(el/3600000); document.getElementById('session-timer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(el>SESSION_TTL) secureLogout('Session timed out.'); } upd(); setInterval(upd,1000); })();
-
-      const paneMap={overview:{pane:'pane-overview',title:'Dashboard Overview',sub:'Academic Year 2024–25'},attendance:{pane:'pane-attendance',title:'Attendance Report',sub:'Semester 5 · 2024–25'},marksheet:{pane:'pane-marksheet',title:'Official Mark Sheet',sub:'Semester 5 · SGPA '+sgpa},session:{pane:'pane-session',title:'Session Security Log',sub:'Active Session Verification'},semester:{pane:'pane-semester',title:'Active Semester Details',sub:'Semester 5 · July–Nov 2024'}};
-      function switchPane(k){ const d=paneMap[k]; if(!d) return; document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById(d.pane).classList.add('active'); document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active')); const btn=document.querySelector('[data-pane="'+k+'"]'); if(btn) btn.classList.add('active'); document.getElementById('page-title').textContent=d.title; document.getElementById('page-sub').textContent=d.sub; }
-      document.querySelectorAll('.nav-link[data-pane]').forEach(btn=>{ btn.addEventListener('click',function(){ switchPane(this.getAttribute('data-pane')); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.add('hidden'); },false); });
-      document.getElementById('menu-btn').addEventListener('click',function(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('sb-overlay').classList.remove('hidden'); },false);
-      document.getElementById('sb-overlay').addEventListener('click',function(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sb-overlay').classList.add('hidden'); },false);
-
-      // Broadcast modal (student can send)
-      const broadcastModal=document.getElementById('broadcast-modal');
-      function openBroadcast(){ broadcastModal.classList.add('open'); document.getElementById('broadcast-message').value=''; document.getElementById('broadcast-message').focus(); }
-      function closeBroadcast(){ broadcastModal.classList.remove('open'); }
-      document.getElementById('broadcast-btn').addEventListener('click', openBroadcast);
-      document.getElementById('broadcast-close').addEventListener('click', closeBroadcast);
-      document.getElementById('broadcast-cancel').addEventListener('click', closeBroadcast);
-      broadcastModal.addEventListener('click', function(e){ if(e.target===this) closeBroadcast(); });
-      document.getElementById('broadcast-send').addEventListener('click', function(){
-        const message=sanitise(document.getElementById('broadcast-message').value);
-        if(!message){ showToast('Please enter a message.','error'); return; }
-        const payload=JSON.stringify({ message, image_url: null, type: 'text' });
-        fetch('/api/broadcasts', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'X-Requested-With':'XMLHttpRequest'}, body:payload })
-          .then(res=>{ if(res.ok){ showToast('Broadcast sent successfully.','success'); closeBroadcast(); loadBroadcasts(); } else return res.json().then(d=>{ throw new Error(d.message||'Broadcast failed'); }); })
-          .catch(err=>{ showToast(err.message||'Broadcast failed. Please try again.','error'); });
+      // ---------- SECURE LOGOUT ----------
+      function secureLogout(reason) {
+        sessionStorage.clear();
+        if (reason) alert('SECURITY: ' + reason);
+        window.location.replace('index.html');
+      }
+      document.getElementById('logout-btn').addEventListener('click', function() {
+        if (confirm('Securely log out?')) secureLogout();
       });
 
-      // Broadcast feed (view only)
+      // ---------- SESSION TIMER ----------
+      (function timer() {
+        function upd() {
+          const el = Date.now() - loginTS;
+          const s = Math.floor(el / 1000) % 60;
+          const m = Math.floor(el / 60000) % 60;
+          const h = Math.floor(el / 3600000);
+          document.getElementById('session-timer').textContent =
+            String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+          if (el > SESSION_TTL) secureLogout('Session timed out.');
+        }
+        upd();
+        setInterval(upd, 1000);
+      })();
+
+      // ---------- MISMATCH DETECTION ----------
+      if (loginFP && currentFP !== loginFP) {
+        document.getElementById('mismatch-banner').classList.remove('hidden');
+        let cd = 10;
+        const t = setInterval(() => {
+          cd--;
+          document.getElementById('mismatch-msg').textContent = 'Fingerprint mismatch. Secure logout in ' + cd +
+            's.';
+          if (cd <= 0) { clearInterval(t);
+            secureLogout('Device fingerprint mismatch.'); }
+        }, 1000);
+      }
+
+      // ---------- FETCH DASHBOARD ----------
+      function fetchDashboard() {
+        fetch('/api/student/dashboard', {
+          method: 'GET',
+          credentials: 'same-origin',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(res => {
+          if (res.status === 401 || res.status === 403) {
+            sessionStorage.clear();
+            window.location.replace('index.html');
+            throw new Error('Unauthorized');
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Dashboard data:', data);
+          renderProfile(data.profile);
+          renderAttendance(data.attendance);
+          renderMarks(data.enrollments);
+          renderSubjects(data.enrollments);
+          renderSessionLog();
+          renderTimetable(data.enrollments);
+          // update overall metrics
+          document.getElementById('ov-att').textContent = data.attendance.percentage + '%';
+          document.getElementById('ov-att-status').textContent = data.attendance.percentage >= 75 ? '✅ Good' :
+            data.attendance.percentage >= 60 ? '⚠️ Low' : '❌ Critical';
+          document.getElementById('ov-pct').textContent = data.overall_percentage + '%';
+          document.getElementById('ov-subjects').textContent = data.enrollments.length;
+          // update class info
+          const cls = data.profile.students_data ? data.profile.students_data.class : '—';
+          const sec = data.profile.students_data ? data.profile.students_data.section : '—';
+          document.getElementById('ov-class').textContent = cls;
+          document.getElementById('ov-section').textContent = sec;
+          // Class pane
+          document.getElementById('class-title').textContent = 'Class ' + cls;
+          document.getElementById('class-section').textContent = 'Section ' + sec;
+          document.getElementById('class-number').textContent = cls;
+          document.getElementById('section-name').textContent = sec;
+          document.getElementById('total-subjects').textContent = data.enrollments.length;
+          // profile
+          document.getElementById('p-name').textContent = data.profile.full_name || safeUser;
+          document.getElementById('p-enc-id').textContent = encId;
+          document.getElementById('p-class').textContent = cls;
+          document.getElementById('p-section').textContent = sec;
+          document.getElementById('p-roll').textContent = data.profile.students_data ? data.profile.students_data
+            .roll_no : '—';
+        })
+        .catch(err => {
+          if (err.message !== 'Unauthorized') {
+            console.error('Dashboard fetch error:', err);
+            showToast('Failed to load dashboard data. Please refresh.', 'error');
+          }
+        });
+      }
+
+      // ---------- RENDER PROFILE ----------
+      function renderProfile(profile) {
+        // already done in fetch
+      }
+
+      // ---------- RENDER ATTENDANCE ----------
+      function renderAttendance(attData) {
+        const total = attData.total || 0;
+        const present = attData.present || 0;
+        const pct = attData.percentage || 0;
+        document.getElementById('att-present').textContent = present;
+        document.getElementById('att-absent').textContent = total - present;
+        document.getElementById('att-pct-text').textContent = pct + '%';
+
+        const circ = document.getElementById('att-circle');
+        const circum = 314.16;
+        const offset = circum - (pct / 100) * circum;
+        circ.style.strokeDashoffset = circum;
+        circ.setAttribute('stroke', pct >= 75 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444');
+        setTimeout(() => { circ.style.strokeDashoffset = offset; }, 100);
+      }
+
+      // ---------- RENDER MARKS ----------
+      function renderMarks(enrollments) {
+        const tbody = document.getElementById('marks-tbody');
+        tbody.innerHTML = '';
+        let totalMarks = 0,
+          totalMax = 0;
+        enrollments.forEach(enr => {
+          const subj = enr.subjects || {};
+          const code = subj.code || '—';
+          const name = subj.name || 'Unknown';
+          let internal = 0,
+            external = 0,
+            total = 0;
+          let grade = '—',
+            gradeClass = '';
+          if (enr.marks && enr.marks.length) {
+            const last = enr.marks[enr.marks.length - 1];
+            internal = last.internal_marks || 0;
+            external = last.external_marks || 0;
+            total = last.total_marks || 0;
+            const pct = Math.round((total / 100) * 100);
+            if (pct >= 90) { grade = 'A';
+              gradeClass = 'grade-A'; } else if (pct >= 75) { grade = 'B';
+              gradeClass = 'grade-B'; } else if (pct >= 60) { grade = 'C';
+              gradeClass = 'grade-C'; } else { grade = 'D';
+              gradeClass = 'grade-D'; }
+            totalMarks += total;
+            totalMax += 100;
+          }
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(code)}</td>
+            <td>${sanitise(name)}</td>
+            <td class="text-right">${internal}</td>
+            <td class="text-right">${external}</td>
+            <td class="text-right font-bold">${total}</td>
+            <td class="text-right">${totalMax ? Math.round((total/100)*100) : 0}%</td>
+            <td class="text-center"><span class="${gradeClass} px-2 py-0.5 rounded-full text-xs font-bold">${grade}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+        const overallPct = totalMax ? Math.round((totalMarks / totalMax) * 100) : 0;
+        document.getElementById('overall-pct').textContent = overallPct + '%';
+        document.getElementById('overall-badge').textContent = 'Overall: ' + overallPct + '%';
+        let overallGrade = '—';
+        if (overallPct >= 90) overallGrade = 'A';
+        else if (overallPct >= 75) overallGrade = 'B';
+        else if (overallPct >= 60) overallGrade = 'C';
+        else overallGrade = 'D';
+        document.getElementById('overall-grade').textContent = overallGrade;
+      }
+
+      // ---------- RENDER SUBJECTS (attendance table) ----------
+      function renderSubjects(enrollments) {
+        const tbody = document.getElementById('att-tbody');
+        tbody.innerHTML = '';
+        enrollments.forEach(enr => {
+          const subj = enr.subjects || {};
+          const code = subj.code || '—';
+          const name = subj.name || 'Unknown';
+          let total = 0,
+            present = 0;
+          if (enr.attendance && enr.attendance.length) {
+            total = enr.attendance.length;
+            present = enr.attendance.filter(a => a.present).length;
+          }
+          const pct = total ? Math.round((present / total) * 100) : 0;
+          const col = pct >= 75 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
+          const badge = pct >= 75 ? '<span class="badge-ok">OK</span>' :
+            pct >= 60 ? '<span class="badge-low">LOW</span>' :
+            '<span class="badge-crit">CRITICAL</span>';
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(code)}</td>
+            <td>${sanitise(name)}</td>
+            <td class="text-right">${total}</td>
+            <td class="text-right text-emerald-600">${present}</td>
+            <td class="text-right text-rose-600">${total - present}</td>
+            <td class="text-right font-bold" style="color:${col}">${pct}%</td>
+            <td>${badge}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // ---------- RENDER SESSION LOG ----------
+      function renderSessionLog() {
+        const tbody = document.getElementById('session-tbody');
+        const rows = [
+          { field: 'Browser', reg: curBrowser, cur: curBrowser },
+          { field: 'Operating System', reg: curOS, cur: curOS },
+          { field: 'Login Time', reg: new Date(loginTS).toLocaleString(), cur: new Date().toLocaleString() },
+          { field: 'Device Fingerprint', reg: loginFP ? loginFP.slice(0, 20) + '…' : 'N/A',
+          cur: currentFP.slice(0, 20) + '…' },
+          { field: 'Screen Resolution', reg: screen.width + '×' + screen.height, cur: screen.width + '×' +
+              screen.height },
+          { field: 'Platform', reg: navigator.platform || 'Unknown', cur: navigator.platform || 'Unknown' }
+        ];
+        tbody.innerHTML = '';
+        rows.forEach(r => {
+          const match = r.reg === r.cur;
+          const badge = match ?
+            '<span class="badge-ok">✓ MATCH</span>' :
+            '<span class="badge-crit">✗ MISMATCH</span>';
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="font-semibold text-slate-600">${sanitise(r.field)}</td>
+            <td class="mono text-xs text-indigo-600">${sanitise(String(r.reg))}</td>
+            <td class="mono text-xs text-emerald-600">${sanitise(String(r.cur))}</td>
+            <td class="text-center">${badge}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        document.getElementById('fp-login').textContent = loginFP || 'N/A';
+        document.getElementById('fp-current').textContent = currentFP;
+      }
+
+      // ---------- RENDER TIMETABLE ----------
+      function renderTimetable(enrollments) {
+        const tbody = document.getElementById('timetable-tbody');
+        tbody.innerHTML = '';
+        // For demo, we just list subjects; if you have timetable data, you can extend
+        enrollments.forEach(enr => {
+          const subj = enr.subjects || {};
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="mono text-xs text-indigo-600">${sanitise(subj.code || '—')}</td>
+            <td>${sanitise(subj.name || 'Unknown')}</td>
+            <td class="text-slate-500">—</td>
+            <td class="text-slate-500">—</td>
+            <td class="text-slate-500">—</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // ---------- BROADCAST FEED ----------
       function loadBroadcasts() {
-        const token = sessionStorage.getItem('cms_token');
         fetch('/api/broadcasts', {
           headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -309,7 +711,9 @@
             } else if (role === 'teacher') {
               badge = '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">Teacher</span>';
             }
-            const imageHtml = b.type === 'image' && b.image_url ? `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` : '';
+            const imageHtml = b.type === 'image' && b.image_url ?
+              `<div class="mt-2"><img src="${sanitise(b.image_url)}" class="max-h-60 rounded-lg border border-slate-200" alt="Broadcast image" onerror="this.style.display='none'"/></div>` :
+              '';
             const div = document.createElement('div');
             div.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200';
             div.innerHTML = `
@@ -331,16 +735,109 @@
           document.getElementById('broadcast-feed').innerHTML = '<p class="text-rose-500 text-sm">Failed to load broadcasts.</p>';
         });
       }
-      // Load broadcasts on page load
+
+      // ---------- BROADCAST MODAL ----------
+      const broadcastModal = document.getElementById('broadcast-modal');
+      const broadcastMsg = document.getElementById('broadcast-message');
+
+      function openBroadcast() {
+        broadcastModal.classList.add('open');
+        broadcastMsg.value = '';
+        broadcastMsg.focus();
+      }
+
+      function closeBroadcast() {
+        broadcastModal.classList.remove('open');
+      }
+
+      document.getElementById('broadcast-btn').addEventListener('click', openBroadcast);
+      document.getElementById('broadcast-close').addEventListener('click', closeBroadcast);
+      document.getElementById('broadcast-cancel').addEventListener('click', closeBroadcast);
+      broadcastModal.addEventListener('click', function(e) {
+        if (e.target === this) closeBroadcast();
+      });
+
+      document.getElementById('broadcast-send').addEventListener('click', function() {
+        const message = sanitise(broadcastMsg.value);
+        if (!message) {
+          showToast('Please enter a message.', 'error');
+          return;
+        }
+        const payload = JSON.stringify({ message, image_url: null, type: 'text' });
+        fetch('/api/broadcasts', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: payload
+        })
+        .then(res => {
+          if (res.ok) {
+            showToast('Broadcast sent successfully.', 'success');
+            closeBroadcast();
+            loadBroadcasts();
+          } else {
+            return res.json().then(d => { throw new Error(d.message || 'Broadcast failed'); });
+          }
+        })
+        .catch(err => {
+          showToast(err.message || 'Broadcast failed. Please try again.', 'error');
+        });
+      });
+
+      // ---------- NAVIGATION ----------
+      const paneMap = {
+        overview: { pane: 'pane-overview', title: 'Dashboard Overview', sub: 'Academic Year 2024–25' },
+        attendance: { pane: 'pane-attendance', title: 'Attendance Report', sub: 'Subject-wise Attendance' },
+        marksheet: { pane: 'pane-marksheet', title: 'Mark Sheet', sub: 'Class Performance' },
+        session: { pane: 'pane-session', title: 'Session Security Log', sub: 'Active Session Verification' },
+        class: { pane: 'pane-class', title: 'My Class', sub: 'Class & Subject Details' }
+      };
+
+      function switchPane(k) {
+        const d = paneMap[k];
+        if (!d) return;
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(d.pane).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        const btn = document.querySelector('[data-pane="' + k + '"]');
+        if (btn) btn.classList.add('active');
+        document.getElementById('page-title').textContent = d.title;
+        document.getElementById('page-sub').textContent = d.sub;
+        // reload broadcasts if overview
+        if (k === 'overview') loadBroadcasts();
+      }
+
+      document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          switchPane(this.getAttribute('data-pane'));
+          document.getElementById('sidebar').classList.remove('open');
+          document.getElementById('sb-overlay').classList.add('hidden');
+        }, false);
+      });
+
+      document.getElementById('menu-btn').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sb-overlay').classList.remove('hidden');
+      }, false);
+      document.getElementById('sb-overlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sb-overlay').classList.add('hidden');
+      }, false);
+
+      // ---------- INIT ----------
+      fetchDashboard();
       loadBroadcasts();
 
-      function fetchStudentDashboard(){ fetch('/api/student/dashboard', { method:'GET', credentials:'same-origin', headers:{'Authorization':'Bearer '+token,'X-Requested-With':'XMLHttpRequest'} })
-        .then(res=>{ if(res.status===401||res.status===403){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Unauthorized'); } return res.json(); })
-        .then(data=>{ console.log('Dashboard data loaded:', data); })
-        .catch(err=>{ if(err.message!=='Unauthorized') console.warn('Dashboard fetch failed:', err); });
-      } fetchStudentDashboard();
+      // reload broadcast when page becomes visible
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted && !sessionStorage.getItem('cms_token')) window.location.replace('index.html');
+        if (e.persisted) loadBroadcasts();
+      }, false);
 
-      window.addEventListener('pageshow', function(e){ if(e.persisted&&!sessionStorage.getItem('cms_token')) window.location.replace('index.html'); }, false);
     })();
   </script>
 </body>
