@@ -799,6 +799,30 @@ app.get('/api/admin/security-logs', verifyTokenAPI, requireRole('admin'), async 
   }
 });
 
+// ─── 10. Admin: List Users (powers Dashboard counts + User Management pane) ───
+app.get('/api/admin/users', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  try {
+    const { role, search } = req.query;
+    let query = supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, role, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (role && ['student', 'teacher', 'admin'].includes(role)) {
+      query = query.eq('role', role);
+    }
+    if (search && typeof search === 'string') {
+      query = query.ilike('full_name', `%${search}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Users list error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
 // ─── Custom 404 Page ───
 app.use((req, res) => {
   res.status(404).send(`
