@@ -71,16 +71,16 @@
           <input type="hidden" id="device-fp" name="device_fingerprint" />
           <input type="hidden" id="captcha-id" name="captcha_id" />
 
-          <!-- Username -->
+          <!-- Email -->
           <div class="mb-4">
-            <label class="block text-slate-700 text-sm font-semibold mb-1.5" for="username">Username / Employee ID</label>
+            <label class="block text-slate-700 text-sm font-semibold mb-1.5" for="username">Email Address</label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               </span>
-              <input type="text" id="username" name="username" class="input-field" placeholder="admin / faculty / student ID" maxlength="64" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
+              <input type="email" id="username" name="username" class="input-field" placeholder="you@example.com" maxlength="120" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required />
             </div>
-            <p class="field-err" id="err-username">Username must be at least 3 characters.</p>
+            <p class="field-err" id="err-username">Enter a valid email address.</p>
           </div>
 
           <!-- Password -->
@@ -224,8 +224,19 @@
         return simSHA256(c.join('|'));
       }
 
-      function generateCSRF() { const a = new Uint8Array(16);
-        crypto.getRandomValues(a); return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); }
+      function readCookie(name) {
+        const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+        return match ? decodeURIComponent(match[1]) : '';
+      }
+      function generateCSRF() {
+        // Read the token the server set in the csrf_token cookie when this page loaded.
+        // Falls back to a locally-generated value only if the cookie is missing (e.g. cookies blocked),
+        // in which case the server will reject the login and ask the user to refresh.
+        const fromCookie = readCookie('csrf_token');
+        if (fromCookie) return fromCookie;
+        const a = new Uint8Array(16);
+        crypto.getRandomValues(a); return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
 
       function evalStrength(pw) { let s = 0; if (pw.length >= 8) s++; if (pw.length >= 12) s++; if (/[A-Z]/.test(pw)) s++;
         if (/[a-z]/.test(pw)) s++; if (/\d/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++; return Math.min(s, 5); }
@@ -349,9 +360,12 @@
         el.classList.toggle('show', !!show);
       }
 
+      function isValidEmail(str) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+      }
       function validateForm(u, pw, rawCap) {
         let ok = true;
-        if (!u || u.length < 3) { showErr('err-username', true, 'Username must be at least 3 characters.');
+        if (!u || !isValidEmail(u)) { showErr('err-username', true, 'Enter a valid email address.');
           ok = false; } else showErr('err-username', false);
         if (!pw || pw.length < 8) { showErr('err-password', true, 'Password must be at least 8 characters.');
           ok = false; } else showErr('err-password', false);
@@ -373,12 +387,12 @@
         const rawPass = document.getElementById('password').value;
         const rawCap = document.getElementById('captcha-answer').value;
         const role = document.getElementById('role').value;
-        const username = sanitise(rawUser);
-        if (!validateForm(username, rawPass, rawCap)) return;
+        const email = sanitise(rawUser.trim());
+        if (!validateForm(email, rawPass, rawCap)) return;
         const capNum = parseCaptchaAnswer(rawCap);
         setLoad(true);
         const payload = JSON.stringify({
-          username,
+          email,
           password: rawPass,
           role: sanitise(role),
           captcha_id: sanitise(document.getElementById('captcha-id').value),
@@ -399,37 +413,29 @@
           })
           .then(res => res.json().then(data => ({ ok: res.ok, data })))
           .then(result => {
+            setLoad(false);
             if (result.ok && result.data.token) {
               resetAttempts();
               sessionStorage.setItem('cms_token', sanitise(result.data.token));
               sessionStorage.setItem('cms_role', sanitise(result.data.role || role));
-              sessionStorage.setItem('cms_user', sanitise(result.data.username || username));
+              sessionStorage.setItem('cms_user', sanitise(result.data.full_name || email));
               sessionStorage.setItem('cms_fp', document.getElementById('device-fp').value);
               sessionStorage.setItem('cms_login_ts', String(Date.now()));
               showToast('Authentication successful. Redirecting…', 'success');
               const map = { student: 'student.html', teacher: 'teacher.html', admin: 'admin.html' };
               const target = map[result.data.role] || map[role] || 'student.html';
               setTimeout(() => window.location.replace(target), 800);
-            } else { recordFailure();
+            } else {
+              recordFailure();
               showToast(result.data.message || 'Invalid credentials. Access denied.', 'error');
-              loadCaptcha(); }
+              loadCaptcha();
+            }
           })
           .catch(() => {
-            // Demo fallback (only if credentials look valid)
-            const demoMap = { admin: 'admin.html', teacher: 'teacher.html', student: 'student.html' };
-            if (username && rawPass.length >= 8) {
-              resetAttempts();
-              const ft = simSHA256(username + Date.now());
-              sessionStorage.setItem('cms_token', ft);
-              sessionStorage.setItem('cms_role', role);
-              sessionStorage.setItem('cms_user', username);
-              sessionStorage.setItem('cms_fp', document.getElementById('device-fp').value);
-              sessionStorage.setItem('cms_login_ts', String(Date.now()));
-              showToast('Demo mode: Redirecting…', 'info');
-              setTimeout(() => window.location.replace(demoMap[role] || 'student.html'), 900);
-            } else { recordFailure();
-              showToast('Authentication failed. Attempt logged.', 'error');
-              loadCaptcha(); }
+            setLoad(false);
+            recordFailure();
+            showToast('Could not reach the server. Check your connection and try again.', 'error');
+            loadCaptcha();
           })
           .finally(() => setLoad(false));
       }, { passive: false });

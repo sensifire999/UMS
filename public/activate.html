@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Activate Account – UMS Laxman Nagar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#f1f5f9}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 4px 24px rgba(15,23,42,0.07)}
+  .input-field{background:#f8fafc;border:1.5px solid #e2e8f0;color:#1e293b;border-radius:10px;width:100%;padding:10px 14px;font-size:14px;transition:border-color .2s,box-shadow .2s;outline:none}
+  .input-field:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.12);background:#fff}
+  .input-field::placeholder{color:#94a3b8}
+  .btn-primary{background:linear-gradient(135deg,#4f46e5 0%,#6366f1 100%);color:#fff;border:none;border-radius:10px;width:100%;padding:12px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.02em;transition:transform .15s,box-shadow .15s,opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,0.35)}
+  .btn-primary:disabled{opacity:.55;cursor:not-allowed}
+  .field-err{color:#dc2626;font-size:12px;margin-top:4px;display:none}
+  .field-err.show{display:block}
+  .toast{position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateX(50px);transition:opacity .3s,transform .3s;pointer-events:none;max-width:340px;min-width:240px;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+  .toast.show{opacity:1;transform:translateX(0)}
+  .bg-dots{background-image:radial-gradient(circle,#cbd5e1 1px,transparent 1px);background-size:22px 22px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{animation:spin .7s linear infinite}
+  .strength-bar div{transition:width .4s ease}
+</style>
+</head>
+<body class="min-h-screen bg-dots flex items-center justify-center p-4">
+
+  <div id="toast" class="toast"></div>
+
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-6">
+      <div class="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mb-3 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm6 9v-1a6 6 0 00-12 0v1h12z"/></svg>
+      </div>
+      <h1 class="text-slate-800 font-extrabold text-lg">UMS Laxman Nagar</h1>
+      <p class="text-slate-400 text-xs">Account Activation</p>
+    </div>
+
+    <div class="card p-7">
+
+      <!-- Loading state -->
+      <div id="state-loading" class="text-center py-6">
+        <svg class="w-6 h-6 text-indigo-500 spin mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+        <p class="text-slate-400 text-sm">Checking your activation link…</p>
+      </div>
+
+      <!-- Invalid/expired token -->
+      <div id="state-error" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></div>
+        <h2 class="text-slate-800 font-bold text-sm mb-1">Link Not Valid</h2>
+        <p class="text-slate-400 text-xs" id="error-msg">This activation link is invalid.</p>
+        <a href="index.html" class="text-indigo-600 text-xs font-semibold mt-4 inline-block">Go to login →</a>
+      </div>
+
+      <!-- Set password form -->
+      <div id="state-form" class="hidden">
+        <p class="text-slate-400 text-xs mb-1">Welcome,</p>
+        <h2 class="text-slate-800 font-bold text-base mb-1" id="welcome-name">—</h2>
+        <p class="text-slate-400 text-xs mb-5"><span id="welcome-email" class="mono">—</span> · <span id="welcome-role" class="capitalize">—</span> account</p>
+
+        <label class="block text-slate-600 text-xs font-semibold mb-1.5">Create Password</label>
+        <input type="password" id="pw1" class="input-field mb-1" placeholder="At least 8 characters" />
+        <div class="field-err" id="err-pw1"></div>
+        <div class="strength-bar h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2 mb-4"><div id="pw-bar" class="h-full rounded-full" style="width:0%;background:#ef4444;"></div></div>
+
+        <label class="block text-slate-600 text-xs font-semibold mb-1.5">Confirm Password</label>
+        <input type="password" id="pw2" class="input-field mb-1" placeholder="Re-type your password" />
+        <div class="field-err" id="err-pw2"></div>
+
+        <button id="activate-btn" class="btn-primary mt-5">
+          <span id="btn-text">Activate Account</span>
+          <svg id="btn-spin" class="w-4 h-4 spin hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+        </button>
+      </div>
+
+      <!-- Success -->
+      <div id="state-success" class="hidden text-center py-4">
+        <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <h2 class="text-slate-800 font-bold text-sm mb-1">Account Activated</h2>
+        <p class="text-slate-400 text-xs mb-4">You can now log in with your new password.</p>
+        <a href="index.html" class="btn-primary inline-block" style="text-decoration:none;">Go to Login</a>
+      </div>
+
+    </div>
+    <p class="text-center text-slate-400 text-xs mt-5">Having trouble? Contact your school admin for a new link.</p>
+  </div>
+
+<script>
+  function sanitise(str){ if(typeof str!=='string') return ''; return str.replace(/[<>"'/\\`$&]/g,'').trim(); }
+  function showToast(msg, type){
+    const el=document.getElementById('toast');
+    const colors={error:'#e11d48',success:'#059669',info:'#4f46e5'};
+    el.style.background=colors[type]||colors.info; el.style.color='#fff'; el.textContent=msg;
+    el.classList.add('show'); clearTimeout(window.__t); window.__t=setTimeout(()=>el.classList.remove('show'),4000);
+  }
+  function showState(name){
+    ['loading','error','form','success'].forEach(s=>document.getElementById('state-'+s).classList.add('hidden'));
+    document.getElementById('state-'+name).classList.remove('hidden');
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  if (!token) {
+    showState('error');
+    document.getElementById('error-msg').textContent = 'No activation token found in this link.';
+  } else {
+    fetch('/api/auth/activation-info?token=' + encodeURIComponent(token))
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          showState('error');
+          document.getElementById('error-msg').textContent = data.message || 'This activation link is invalid.';
+          return;
+        }
+        document.getElementById('welcome-name').textContent = sanitise(data.full_name || 'there');
+        document.getElementById('welcome-email').textContent = sanitise(data.email || '—');
+        document.getElementById('welcome-role').textContent = sanitise(data.role || '');
+        showState('form');
+      })
+      .catch(() => {
+        showState('error');
+        document.getElementById('error-msg').textContent = 'Could not reach the server. Try again later.';
+      });
+  }
+
+  document.getElementById('pw1').addEventListener('input', function() {
+    const v = this.value;
+    let score = 0;
+    if (v.length >= 8) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const map = { 0: { w: '5%', c: '#ef4444' }, 1: { w: '30%', c: '#ef4444' }, 2: { w: '55%', c: '#f59e0b' }, 3: { w: '80%', c: '#10b981' }, 4: { w: '100%', c: '#059669' } };
+    const m = map[score] || map[0];
+    document.getElementById('pw-bar').style.width = m.w;
+    document.getElementById('pw-bar').style.background = m.c;
+  });
+
+  function showErr(id, show, msg) {
+    const el = document.getElementById(id);
+    if (msg) el.textContent = msg;
+    el.classList.toggle('show', !!show);
+  }
+
+  document.getElementById('activate-btn').addEventListener('click', function() {
+    const pw1 = document.getElementById('pw1').value;
+    const pw2 = document.getElementById('pw2').value;
+    let ok = true;
+    if (!pw1 || pw1.length < 8) { showErr('err-pw1', true, 'Password must be at least 8 characters.'); ok = false; }
+    else showErr('err-pw1', false);
+    if (pw1 !== pw2) { showErr('err-pw2', true, 'Passwords do not match.'); ok = false; }
+    else showErr('err-pw2', false);
+    if (!ok) return;
+
+    const btn = this;
+    btn.disabled = true;
+    document.getElementById('btn-text').textContent = 'Activating…';
+    document.getElementById('btn-spin').classList.remove('hidden');
+
+    fetch('/api/auth/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password: pw1 })
+    })
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok) {
+          showState('success');
+        } else {
+          showToast(data.message || 'Could not activate account.', 'error');
+          btn.disabled = false;
+          document.getElementById('btn-text').textContent = 'Activate Account';
+          document.getElementById('btn-spin').classList.add('hidden');
+        }
+      })
+      .catch(() => {
+        showToast('Network error. Try again.', 'error');
+        btn.disabled = false;
+        document.getElementById('btn-text').textContent = 'Activate Account';
+        document.getElementById('btn-spin').classList.add('hidden');
+      });
+  });
+</script>
+</body>
+</html>

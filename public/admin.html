@@ -85,6 +85,8 @@
       <button class="nav-link" data-pane="security"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Security Logs</button>
       <button class="nav-link" data-pane="adduser"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>Add Student / Teacher</button>
       <button class="nav-link" data-pane="users"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>User Management</button>
+      <button class="nav-link" data-pane="teacherrequests"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Teacher Requests<span id="tr-badge" class="hidden ml-auto bg-rose-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5"></span></button>
+      <button class="nav-link" data-pane="history"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>History</button>
       <!-- NEW: Broadcasts -->
       <button class="nav-link" data-pane="broadcasts">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
@@ -227,7 +229,7 @@
               <button id="users-refresh-btn" class="btn-outline" style="padding:9px 14px;font-size:12px;">Search</button>
             </div>
           </div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Full Name</th><th>Role</th><th>Class</th><th>User ID</th><th>Joined</th><th class="text-right">Action</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Full Name</th><th>Role</th><th>Class</th><th>Status</th><th>User ID</th><th>Joined</th><th class="text-right">Actions</th></tr></thead><tbody id="users-tbody"></tbody></table></div>
           <div id="users-empty" class="hidden p-8 text-center text-slate-400 text-sm">No users found.</div>
           <div class="px-5 py-3 border-t border-slate-100 text-slate-400 text-xs" id="users-count-label">Loading…</div>
         </div>
@@ -237,7 +239,7 @@
       <div class="pane" id="pane-adduser">
         <div class="card p-6" style="max-width:760px;">
           <h2 class="text-slate-800 font-bold text-sm mb-1">Create New Login Account</h2>
-          <p class="text-slate-400 text-xs mb-5">Creates a real login (email + password) and profile. Students are auto-enrolled into all subjects for their class/stream. Teachers are assigned the subjects checked below.</p>
+          <p class="text-slate-400 text-xs mb-5">No password is set here — an activation link is generated instead. Send that link to the person; they'll set their own password. Students are auto-enrolled into all subjects for their class/stream.</p>
 
           <div class="grid sm:grid-cols-2 gap-4 mb-4">
             <div>
@@ -246,19 +248,12 @@
             </div>
             <div>
               <label class="block text-slate-600 text-xs font-semibold mb-1">Role</label>
-              <select id="nu-role" class="form-sel w-full"><option value="student">Student</option><option value="teacher">Teacher</option></select>
+              <select id="nu-role" class="form-sel w-full"><option value="student">Student</option><option value="teacher">Teacher</option><option value="admin">Admin</option></select>
             </div>
           </div>
-          <div class="grid sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="block text-slate-600 text-xs font-semibold mb-1">Username</label>
-              <input type="text" id="nu-username" class="form-inp" placeholder="e.g. rahul.kumar" />
-              <p class="text-slate-400 text-xs mt-1">Login email will be <span class="mono" id="nu-email-preview">username@umslaxmannagar.edu</span></p>
-            </div>
-            <div>
-              <label class="block text-slate-600 text-xs font-semibold mb-1">Temporary Password</label>
-              <input type="text" id="nu-password" class="form-inp" placeholder="min. 8 characters" />
-            </div>
+          <div class="mb-4">
+            <label class="block text-slate-600 text-xs font-semibold mb-1">Email Address</label>
+            <input type="email" id="nu-email" class="form-inp" placeholder="e.g. rahul.kumar@gmail.com — any email works" />
           </div>
 
           <div id="nu-student-fields" class="grid sm:grid-cols-2 gap-4 mb-4 pt-4 border-t border-slate-100">
@@ -288,9 +283,82 @@
           </div>
 
           <button id="nu-submit-btn" class="btn-primary">Create Account</button>
+          <div id="nu-link-wrap" class="hidden mt-5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <p class="text-emerald-700 text-xs font-bold mb-2">✓ Account created — send this activation link:</p>
+            <div class="flex items-center gap-2">
+              <input type="text" id="nu-link-input" class="form-inp mono" style="font-size:12px;" readonly />
+              <button id="nu-copy-btn" class="btn-outline" style="white-space:nowrap;padding:9px 14px;font-size:12px;">Copy</button>
+            </div>
+          </div>
           <div id="nu-result-wrap" class="hidden mt-5">
             <div class="payload-box" id="nu-payload-box"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- PANE: TEACHER REQUESTS -->
+      <div class="pane" id="pane-teacherrequests">
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-slate-800 font-bold text-sm">Pending Teacher Account Requests</h2>
+            <button id="tr-refresh-btn" class="btn-outline" style="padding:6px 14px;font-size:12px;">Refresh</button>
+          </div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Name</th><th>Email</th><th>Requested By</th><th>Subjects</th><th>Status</th><th class="text-right">Action</th></tr></thead><tbody id="tr-tbody"></tbody></table></div>
+          <div id="tr-empty" class="hidden p-8 text-center text-slate-400 text-sm">No teacher requests yet.</div>
+        </div>
+        <div id="tr-result-wrap" class="hidden mt-5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <p class="text-emerald-700 text-xs font-bold mb-2">✓ Teacher account created — send this activation link:</p>
+          <div class="flex items-center gap-2">
+            <input type="text" id="tr-link-input" class="form-inp mono" style="font-size:12px;" readonly />
+            <button id="tr-copy-btn" class="btn-outline" style="white-space:nowrap;padding:9px 14px;font-size:12px;">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: HISTORY -->
+      <div class="pane" id="pane-history">
+        <div class="card overflow-hidden mb-5">
+          <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">Role Change History</h2></div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Time</th><th>Old Role</th><th>New Role</th><th>Reason</th></tr></thead><tbody id="history-roles-tbody"></tbody></table></div>
+          <div id="history-roles-empty" class="hidden p-8 text-center text-slate-400 text-sm">No role changes yet.</div>
+        </div>
+        <div class="card overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-slate-800 font-bold text-sm">CSV Upload History</h2></div>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Time</th><th>Filename</th><th>Size</th><th>Status</th></tr></thead><tbody id="history-uploads-tbody"></tbody></table></div>
+          <div id="history-uploads-empty" class="hidden p-8 text-center text-slate-400 text-sm">No uploads yet.</div>
+        </div>
+      </div>
+
+      <!-- PANE: EDIT USER -->
+      <div class="pane" id="pane-edituser">
+        <button id="eu-back-btn" class="text-indigo-600 text-xs font-semibold mb-4 hover:underline">← Back to Users</button>
+        <div class="card p-6" style="max-width:600px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Edit User</h2>
+          <p class="text-slate-400 text-xs mb-5" id="eu-subtitle">—</p>
+          <div class="mb-4">
+            <label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label>
+            <input type="text" id="eu-fullname" class="form-inp" />
+          </div>
+          <div id="eu-student-fields" class="hidden grid sm:grid-cols-2 gap-4 mb-4 pt-4 border-t border-slate-100">
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Roll Number</label><input type="text" id="eu-rollno" class="form-inp" /></div>
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Class</label><select id="eu-class" class="form-sel w-full"><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Section</label><select id="eu-section" class="form-sel w-full"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div>
+            <div id="eu-stream-wrap" class="hidden"><label class="block text-slate-600 text-xs font-semibold mb-1">Stream</label><select id="eu-stream" class="form-sel w-full"><option value="Science">Science</option><option value="Commerce">Commerce</option><option value="Arts">Arts</option></select></div>
+          </div>
+          <button id="eu-submit-btn" class="btn-primary">Save Changes</button>
+          <div id="eu-result-wrap" class="hidden mt-5"><div class="payload-box" id="eu-payload-box"></div></div>
+        </div>
+      </div>
+
+      <!-- PANE: MANAGE SUBJECTS (shared for students + teachers) -->
+      <div class="pane" id="pane-editsubjects">
+        <button id="es-back-btn" class="text-indigo-600 text-xs font-semibold mb-4 hover:underline">← Back to Users</button>
+        <div class="card p-6">
+          <h2 class="text-slate-800 font-bold text-sm mb-1" id="es-title">Manage Subjects</h2>
+          <p class="text-slate-400 text-xs mb-5" id="es-subtitle">—</p>
+          <div id="es-grid" class="space-y-4 max-h-96 overflow-y-auto pr-2 mb-5"></div>
+          <button id="es-submit-btn" class="btn-primary">Save Subjects</button>
+          <div id="es-result-wrap" class="hidden mt-5"><div class="payload-box" id="es-payload-box"></div></div>
         </div>
       </div>
 
@@ -490,7 +558,19 @@
               classInfo = 'Class ' + sanitise(String(u.class)) + '-' + sanitise(u.section || '');
               if (u.stream) classInfo += ' (' + sanitise(u.stream) + ')';
             }
-            tr.innerHTML = '<td class="font-semibold">'+sanitise(u.full_name||'Unknown')+'</td><td>'+roleBadge(u.role)+'</td><td style="color:#64748b;font-size:13px;">'+classInfo+'</td><td class="mono" style="font-size:11px;color:#64748b;" title="'+sanitise(u.id||'')+'">'+shortId+'</td><td style="color:#64748b;">'+(u.created_at ? sanitise(new Date(u.created_at).toLocaleDateString()) : '—')+'</td><td class="text-right"><button class="change-role-btn text-indigo-600 hover:text-indigo-800 text-xs font-medium" data-id="'+sanitise(u.id||'')+'" data-role="'+sanitise(u.role||'')+'">Change Role</button></td>';
+            const statusBadge = u.activated
+              ? '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2 py-0.5 rounded-full">Active</span>'
+              : '<span class="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-2 py-0.5 rounded-full">Pending</span>';
+            const actions = ['<button class="eu-edit-btn text-indigo-600 hover:text-indigo-800 font-medium" data-id="'+sanitise(u.id||'')+'">Edit</button>'];
+            if (u.role === 'student') {
+              actions.push('<button class="es-subj-btn text-violet-600 hover:text-violet-800 font-medium" data-id="'+sanitise(u.id||'')+'" data-type="student">Subjects</button>');
+            } else if (u.role === 'teacher') {
+              actions.push('<button class="es-subj-btn text-violet-600 hover:text-violet-800 font-medium" data-id="'+sanitise(u.id||'')+'" data-type="teacher">Subjects</button>');
+            }
+            actions.push('<button class="change-role-btn text-slate-500 hover:text-slate-700 font-medium" data-id="'+sanitise(u.id||'')+'" data-role="'+sanitise(u.role||'')+'">Role</button>');
+            actions.push('<button class="reset-pw-btn text-amber-600 hover:text-amber-800 font-medium" data-id="'+sanitise(u.id||'')+'">Reset</button>');
+            actions.push('<button class="delete-user-btn text-rose-600 hover:text-rose-800 font-medium" data-id="'+sanitise(u.id||'')+'" data-name="'+sanitise(u.full_name||'')+'">Delete</button>');
+            tr.innerHTML = '<td class="font-semibold">'+sanitise(u.full_name||'Unknown')+'</td><td>'+roleBadge(u.role)+'</td><td style="color:#64748b;font-size:13px;">'+classInfo+'</td><td>'+statusBadge+'</td><td class="mono" style="font-size:11px;color:#64748b;" title="'+sanitise(u.id||'')+'">'+shortId+'</td><td style="color:#64748b;">'+(u.created_at ? sanitise(new Date(u.created_at).toLocaleDateString()) : '—')+'</td><td class="text-right" style="white-space:nowrap;"><div class="flex items-center justify-end gap-2 text-xs">'+actions.join('<span class="text-slate-300">·</span>')+'</div></td>';
             tbody.appendChild(tr);
           });
           document.querySelectorAll('.change-role-btn').forEach(btn => {
@@ -501,11 +581,238 @@
               showToast('User loaded into Role Management form.', 'info');
             });
           });
+          document.querySelectorAll('.eu-edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() { openEditUser(this.dataset.id); });
+          });
+          document.querySelectorAll('.es-subj-btn').forEach(btn => {
+            btn.addEventListener('click', function() { openEditSubjects(this.dataset.id, this.dataset.type); });
+          });
+          document.querySelectorAll('.reset-pw-btn').forEach(btn => {
+            btn.addEventListener('click', function() { resetUserPassword(this.dataset.id); });
+          });
+          document.querySelectorAll('.delete-user-btn').forEach(btn => {
+            btn.addEventListener('click', function() { deleteUser(this.dataset.id, this.dataset.name); });
+          });
         }).catch(err => { console.error('Users load error:', err); showToast('Failed to load users.', 'error'); countLabel.textContent = 'Failed to load.'; });
       }
       document.getElementById('users-refresh-btn').addEventListener('click', loadUsers);
       document.getElementById('users-search').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadUsers(); });
       document.getElementById('users-role-filter').addEventListener('change', loadUsers);
+
+      function resetUserPassword(id) {
+        if (!confirm('Generate a new activation link for this user? Their current password will stop working until they activate again.')) return;
+        fetch('/api/admin/users/' + id + '/reset-password', { method: 'POST', headers: authHeaders() })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            if (ok) {
+              showToast(data.message || 'Password reset.', 'success');
+              prompt('New activation link (copy it):', data.activation_link || '');
+              loadUsers();
+            } else { showToast(data.message || 'Could not reset password.', 'error'); }
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      }
+
+      function deleteUser(id, name) {
+        if (!confirm('Permanently delete "' + name + '"? This cannot be undone.')) return;
+        fetch('/api/admin/users/' + id, { method: 'DELETE', headers: authHeaders() })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            showToast(data.message || (ok ? 'User deleted.' : 'Could not delete user.'), ok ? 'success' : 'error');
+            if (ok) loadUsers();
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      }
+
+      // ─── Edit User pane ───
+      document.getElementById('eu-back-btn').addEventListener('click', function() { switchPane('users'); });
+      let euCurrentId = null;
+      function openEditUser(id) {
+        euCurrentId = id;
+        fetch('/api/admin/users?search=', { headers: authHeaders() }).then(r => r.json()).then(all => {
+          const u = (all || []).find(x => x.id === id);
+          if (!u) { showToast('User not found.', 'error'); return; }
+          document.getElementById('eu-subtitle').textContent = u.role.charAt(0).toUpperCase() + u.role.slice(1) + ' account';
+          document.getElementById('eu-fullname').value = u.full_name || '';
+          const studentFields = document.getElementById('eu-student-fields');
+          if (u.role === 'student') {
+            studentFields.classList.remove('hidden');
+            document.getElementById('eu-rollno').value = u.roll_no || '';
+            document.getElementById('eu-class').value = u.class || '9';
+            document.getElementById('eu-section').value = u.section || 'A';
+            document.getElementById('eu-stream-wrap').classList.toggle('hidden', !['11','12'].includes(String(u.class)));
+            if (u.stream) document.getElementById('eu-stream').value = u.stream;
+          } else {
+            studentFields.classList.add('hidden');
+          }
+          switchPane('edituser');
+        }).catch(() => showToast('Failed to load user.', 'error'));
+      }
+      document.getElementById('eu-class').addEventListener('change', function() {
+        document.getElementById('eu-stream-wrap').classList.toggle('hidden', !['11','12'].includes(this.value));
+      });
+      document.getElementById('eu-submit-btn').addEventListener('click', function() {
+        if (!euCurrentId) return;
+        const payload = { full_name: document.getElementById('eu-fullname').value.trim() };
+        if (!document.getElementById('eu-student-fields').classList.contains('hidden')) {
+          payload.roll_no = document.getElementById('eu-rollno').value.trim();
+          payload.class_level = document.getElementById('eu-class').value;
+          payload.section = document.getElementById('eu-section').value;
+          if (['11','12'].includes(payload.class_level)) payload.stream = document.getElementById('eu-stream').value;
+        }
+        fetch('/api/admin/users/' + euCurrentId, { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            const wrap = document.getElementById('eu-result-wrap'); wrap.classList.remove('hidden');
+            document.getElementById('eu-payload-box').textContent = JSON.stringify(data, null, 2);
+            showToast(data.message || (ok ? 'Updated.' : 'Failed.'), ok ? 'success' : 'error');
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      });
+
+      // ─── Manage Subjects pane (shared for students + teachers) ───
+      document.getElementById('es-back-btn').addEventListener('click', function() { switchPane('users'); });
+      let esCurrentId = null, esCurrentType = null;
+      function openEditSubjects(id, type) {
+        esCurrentId = id; esCurrentType = type;
+        const grid = document.getElementById('es-grid');
+        grid.innerHTML = '<p class="text-slate-400 text-sm">Loading…</p>';
+        switchPane('editsubjects');
+        const url = type === 'student' ? '/api/admin/student/' + id + '/subjects' : '/api/admin/teacher/' + id + '/subjects';
+        fetch(url, { headers: authHeaders() }).then(res => res.json().then(data => ({ ok: res.ok, data }))).then(({ ok, data }) => {
+          if (!ok) { grid.innerHTML = '<p class="text-rose-500 text-sm">'+sanitise(data.message||'Could not load.')+'</p>'; return; }
+          grid.innerHTML = '';
+          if (type === 'student') {
+            document.getElementById('es-title').textContent = 'Manage Subjects';
+            document.getElementById('es-subtitle').textContent = data.student.full_name + ' · Class ' + data.student.class + '-' + data.student.section + (data.student.stream ? ' (' + data.student.stream + ')' : '');
+            const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+            data.subjects.forEach(s => {
+              row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="es-check" data-subject="'+sanitise(s.subject)+'" '+(s.enrolled?'checked':'')+'> '+sanitise(s.subject)+'</label>';
+            });
+            grid.appendChild(row);
+          } else {
+            document.getElementById('es-title').textContent = 'Manage Subjects';
+            document.getElementById('es-subtitle').textContent = data.teacher.full_name + ' · choose subjects this teacher will teach';
+            const byGroup = {};
+            data.combos.forEach(c => {
+              const key = 'Class ' + c.class_level + (c.stream ? ' – ' + c.stream : '');
+              if (!byGroup[key]) byGroup[key] = [];
+              byGroup[key].push(c);
+            });
+            Object.keys(byGroup).forEach(key => {
+              const wrap = document.createElement('div');
+              wrap.innerHTML = '<p class="text-slate-500 text-xs font-bold mb-1.5">'+sanitise(key)+'</p>';
+              const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+              byGroup[key].forEach(c => {
+                row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="es-check" data-class="'+c.class_level+'" data-stream="'+(c.stream||'')+'" data-subject="'+sanitise(c.subject)+'" '+(c.assigned?'checked':'')+'> '+sanitise(c.subject)+'</label>';
+              });
+              wrap.appendChild(row);
+              grid.appendChild(wrap);
+            });
+          }
+        }).catch(() => { grid.innerHTML = '<p class="text-rose-500 text-sm">Failed to load.</p>'; });
+      }
+      document.getElementById('es-submit-btn').addEventListener('click', function() {
+        if (!esCurrentId) return;
+        let payload;
+        if (esCurrentType === 'student') {
+          const subjects = Array.from(document.querySelectorAll('.es-check:checked')).map(cb => cb.dataset.subject);
+          payload = { subjects };
+        } else {
+          const subjects = Array.from(document.querySelectorAll('.es-check:checked')).map(cb => ({ class_level: cb.dataset.class, stream: cb.dataset.stream || null, subject: cb.dataset.subject }));
+          payload = { subjects };
+        }
+        const url = esCurrentType === 'student' ? '/api/admin/student/' + esCurrentId + '/subjects' : '/api/admin/teacher/' + esCurrentId + '/subjects';
+        fetch(url, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            const wrap = document.getElementById('es-result-wrap'); wrap.classList.remove('hidden');
+            document.getElementById('es-payload-box').textContent = JSON.stringify(data, null, 2);
+            showToast(data.message || (ok ? 'Saved.' : 'Failed.'), ok ? 'success' : 'error');
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      });
+
+      // ─── Teacher Requests ───
+      function loadTeacherRequests() {
+        const tbody = document.getElementById('tr-tbody'), emptyEl = document.getElementById('tr-empty');
+        fetch('/api/admin/teacher-requests', { headers: authHeaders() }).then(res => res.json()).then(data => {
+          tbody.innerHTML = '';
+          const pending = (data || []).filter(r => r.status === 'pending');
+          const badge = document.getElementById('tr-badge');
+          if (pending.length) { badge.textContent = pending.length; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+          if (!Array.isArray(data) || !data.length) { emptyEl.classList.remove('hidden'); return; }
+          emptyEl.classList.add('hidden');
+          data.forEach(r => {
+            const subjNames = Array.isArray(r.subjects) ? r.subjects.map(s => s.subject).join(', ') : '—';
+            const statusCls = r.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : r.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+            const tr = document.createElement('tr');
+            let actionsHtml = '<span class="text-slate-400 text-xs">—</span>';
+            if (r.status === 'pending') {
+              actionsHtml = '<button class="tr-approve-btn text-emerald-600 hover:text-emerald-800 text-xs font-medium" data-id="'+r.id+'">Approve</button><span class="text-slate-300 mx-1">·</span><button class="tr-reject-btn text-rose-600 hover:text-rose-800 text-xs font-medium" data-id="'+r.id+'">Reject</button>';
+            }
+            tr.innerHTML = '<td class="font-semibold">'+sanitise(r.full_name)+'</td><td class="mono" style="font-size:12px;">'+sanitise(r.email)+'</td><td style="color:#64748b;">'+sanitise(r.requested_by_name)+'</td><td style="color:#64748b;font-size:12px;">'+sanitise(subjNames)+'</td><td><span class="'+statusCls+' border text-xs font-bold px-2 py-0.5 rounded-full">'+sanitise(r.status)+'</span></td><td class="text-right">'+actionsHtml+'</td>';
+            tbody.appendChild(tr);
+          });
+          document.querySelectorAll('.tr-approve-btn').forEach(btn => btn.addEventListener('click', function() { approveTeacherRequest(this.dataset.id); }));
+          document.querySelectorAll('.tr-reject-btn').forEach(btn => btn.addEventListener('click', function() { rejectTeacherRequest(this.dataset.id); }));
+        }).catch(() => showToast('Failed to load requests.', 'error'));
+      }
+      document.getElementById('tr-refresh-btn').addEventListener('click', loadTeacherRequests);
+      document.getElementById('tr-copy-btn').addEventListener('click', function() {
+        const inp = document.getElementById('tr-link-input'); inp.select(); inp.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(inp.value).then(() => showToast('Link copied.', 'success')).catch(() => document.execCommand('copy'));
+      });
+      function approveTeacherRequest(id) {
+        if (!confirm('Approve this teacher account request?')) return;
+        fetch('/api/admin/teacher-requests/' + id + '/approve', { method: 'POST', headers: authHeaders() })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            showToast(data.message || (ok ? 'Approved.' : 'Failed.'), ok ? 'success' : 'error');
+            if (ok && data.activation_link) {
+              document.getElementById('tr-link-input').value = data.activation_link;
+              document.getElementById('tr-result-wrap').classList.remove('hidden');
+            }
+            loadTeacherRequests();
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      }
+      function rejectTeacherRequest(id) {
+        if (!confirm('Reject this teacher account request?')) return;
+        fetch('/api/admin/teacher-requests/' + id + '/reject', { method: 'POST', headers: authHeaders() })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => { showToast(data.message || (ok ? 'Rejected.' : 'Failed.'), ok ? 'success' : 'error'); loadTeacherRequests(); })
+          .catch(() => showToast('Request failed.', 'error'));
+      }
+
+      // ─── History (Role Audit + Upload Logs) ───
+      function loadHistory() {
+        const rolesTb = document.getElementById('history-roles-tbody'), rolesEmpty = document.getElementById('history-roles-empty');
+        fetch('/api/admin/role-audit', { headers: authHeaders() }).then(res => res.json()).then(data => {
+          rolesTb.innerHTML = '';
+          if (!Array.isArray(data) || !data.length) { rolesEmpty.classList.remove('hidden'); return; }
+          rolesEmpty.classList.add('hidden');
+          data.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(new Date(r.created_at).toLocaleString())+'</td><td>'+roleBadge(r.old_role)+'</td><td>'+roleBadge(r.new_role)+'</td><td style="color:#64748b;font-size:13px;">'+sanitise(r.reason||'—')+'</td>';
+            rolesTb.appendChild(tr);
+          });
+        }).catch(() => showToast('Failed to load role history.', 'error'));
+
+        const upTb = document.getElementById('history-uploads-tbody'), upEmpty = document.getElementById('history-uploads-empty');
+        fetch('/api/admin/upload-logs', { headers: authHeaders() }).then(res => res.json()).then(data => {
+          upTb.innerHTML = '';
+          if (!Array.isArray(data) || !data.length) { upEmpty.classList.remove('hidden'); return; }
+          upEmpty.classList.add('hidden');
+          data.forEach(u => {
+            const statusCls = u.status === 'SUCCESS' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+            const sizeKb = u.filesize ? Math.round(u.filesize / 1024) + ' KB' : '—';
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(new Date(u.created_at).toLocaleString())+'</td><td>'+sanitise(u.filename||'—')+'</td><td style="color:#64748b;">'+sizeKb+'</td><td><span class="'+statusCls+' border text-xs font-bold px-2 py-0.5 rounded-full">'+sanitise(u.status)+'</span></td>';
+            upTb.appendChild(tr);
+          });
+        }).catch(() => showToast('Failed to load upload history.', 'error'));
+      }
 
       // ─── Add Student / Teacher ───
       const SUBJECT_MAP = {
@@ -515,15 +822,14 @@
         '12': { Science: ['English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'], Commerce: ['English', 'Accountancy', 'Business Studies', 'Economics', 'Mathematics'], Arts: ['English', 'History', 'Political Science', 'Geography', 'Economics'] }
       };
       (function() {
-        const fullname = document.getElementById('nu-fullname'), username = document.getElementById('nu-username'),
-              password = document.getElementById('nu-password'), roleSel = document.getElementById('nu-role'),
+        const fullname = document.getElementById('nu-fullname'), emailInput = document.getElementById('nu-email'),
+              roleSel = document.getElementById('nu-role'),
               studentFields = document.getElementById('nu-student-fields'), teacherFields = document.getElementById('nu-teacher-fields'),
               classSel = document.getElementById('nu-class'), streamWrap = document.getElementById('nu-stream-wrap'), streamSel = document.getElementById('nu-stream'),
               sectionSel = document.getElementById('nu-section'), rollInput = document.getElementById('nu-rollno'),
-              emailPreview = document.getElementById('nu-email-preview'), subjectGrid = document.getElementById('nu-subject-grid'),
-              submitBtn = document.getElementById('nu-submit-btn'), resultWrap = document.getElementById('nu-result-wrap'), payloadBox = document.getElementById('nu-payload-box');
-
-        username.addEventListener('input', () => { emailPreview.textContent = (username.value.trim() || 'username') + '@umslaxmannagar.edu'; });
+              subjectGrid = document.getElementById('nu-subject-grid'),
+              submitBtn = document.getElementById('nu-submit-btn'), resultWrap = document.getElementById('nu-result-wrap'), payloadBox = document.getElementById('nu-payload-box'),
+              linkWrap = document.getElementById('nu-link-wrap'), linkInput = document.getElementById('nu-link-input'), copyBtn = document.getElementById('nu-copy-btn');
 
         function renderSubjectGrid() {
           subjectGrid.innerHTML = '';
@@ -560,25 +866,28 @@
         updateStreamVisibility();
 
         function updateRoleVisibility() {
-          const isStudent = roleSel.value === 'student';
-          studentFields.classList.toggle('hidden', !isStudent);
-          teacherFields.classList.toggle('hidden', isStudent);
+          const role = roleSel.value;
+          studentFields.classList.toggle('hidden', role !== 'student');
+          teacherFields.classList.toggle('hidden', role !== 'teacher');
         }
         roleSel.addEventListener('change', updateRoleVisibility);
         updateRoleVisibility();
 
         function resetForm() {
-          fullname.value = ''; username.value = ''; password.value = ''; rollInput.value = '';
-          emailPreview.textContent = 'username@umslaxmannagar.edu';
+          fullname.value = ''; emailInput.value = ''; rollInput.value = '';
           document.querySelectorAll('.subj-check').forEach(cb => { cb.checked = false; });
         }
 
+        copyBtn.addEventListener('click', function() {
+          linkInput.select(); linkInput.setSelectionRange(0, 99999);
+          navigator.clipboard.writeText(linkInput.value).then(() => showToast('Link copied.', 'success')).catch(() => document.execCommand('copy'));
+        });
+
         submitBtn.addEventListener('click', function() {
           const role = roleSel.value;
-          const payload = { full_name: fullname.value.trim(), username: username.value.trim(), password: password.value, role };
+          const payload = { full_name: fullname.value.trim(), email: emailInput.value.trim(), role };
           if (!payload.full_name || payload.full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
-          if (!payload.username || payload.username.length < 3) { showToast('Enter a valid username.', 'error'); return; }
-          if (!payload.password || payload.password.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) { showToast('Enter a valid email address.', 'error'); return; }
 
           if (role === 'student') {
             payload.roll_no = rollInput.value.trim();
@@ -586,19 +895,23 @@
             payload.section = sectionSel.value;
             if (['11', '12'].includes(payload.class_level)) payload.stream = streamSel.value;
             if (!payload.roll_no) { showToast('Enter a roll number.', 'error'); return; }
-          } else {
+          } else if (role === 'teacher') {
             payload.subjects = Array.from(document.querySelectorAll('.subj-check:checked')).map(cb => ({
               class_level: cb.dataset.class, stream: cb.dataset.stream || null, subject: cb.dataset.subject
             }));
           }
 
           submitBtn.disabled = true;
+          linkWrap.classList.add('hidden');
           fetch('/api/admin/create-user', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
             .then(res => res.json().then(data => ({ ok: res.ok, data })))
             .then(({ ok, data }) => {
               resultWrap.classList.remove('hidden'); payloadBox.textContent = JSON.stringify(data, null, 2);
-              if (ok) { showToast(data.message || 'Account created.', 'success'); resetForm(); }
-              else { showToast(data.message || 'Could not create account.', 'error'); }
+              if (ok) {
+                showToast(data.message || 'Account created.', 'success');
+                if (data.activation_link) { linkInput.value = data.activation_link; linkWrap.classList.remove('hidden'); }
+                resetForm();
+              } else { showToast(data.message || 'Could not create account.', 'error'); }
               submitBtn.disabled = false;
             })
             .catch(() => { showToast('Request failed.', 'error'); submitBtn.disabled = false; });
@@ -714,6 +1027,10 @@
         security: { pane: 'pane-security', title: 'Security Logs', sub: 'Live Threat Intelligence Feed' },
         users: { pane: 'pane-users', title: 'User Management', sub: 'Student & Teacher Registry' },
         adduser: { pane: 'pane-adduser', title: 'Add Student / Teacher', sub: 'Create a New Login Account' },
+        teacherrequests: { pane: 'pane-teacherrequests', title: 'Teacher Requests', sub: 'Approve or Reject New Teacher Accounts' },
+        history: { pane: 'pane-history', title: 'History', sub: 'Role Changes & CSV Upload Log' },
+        editsubjects: { pane: 'pane-editsubjects', title: 'Manage Subjects', sub: 'Add or Remove Enrolled Subjects' },
+        edituser: { pane: 'pane-edituser', title: 'Edit User', sub: 'Update Profile Details' },
         broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
       };
       function switchPane(k) {
@@ -732,6 +1049,10 @@
           loadSecurityLogs();
         } else if (k === 'users') {
           loadUsers();
+        } else if (k === 'teacherrequests') {
+          loadTeacherRequests();
+        } else if (k === 'history') {
+          loadHistory();
         }
       }
       document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {

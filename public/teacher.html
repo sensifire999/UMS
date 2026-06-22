@@ -79,6 +79,9 @@
       <button class="nav-link" data-pane="attendance"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Mark Attendance</button>
       <button class="nav-link" data-pane="marks"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Enter Marks</button>
       <button class="nav-link" data-pane="courses"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>My Subjects</button>
+      <button class="nav-link" data-pane="addstudent"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>Add Student</button>
+      <button class="nav-link" data-pane="requestteacher"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Request Teacher</button>
+      <button class="nav-link" data-pane="profile"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>My Profile</button>
       <!-- NEW: Broadcasts -->
       <button class="nav-link" data-pane="broadcasts">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
@@ -189,6 +192,80 @@
           </div>
           <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Subject Code</th><th>Subject</th><th class="text-right">Students Enrolled</th><th class="text-right">Action</th></tr></thead><tbody id="courses-tbody"></tbody></table></div>
           <div id="courses-empty" class="hidden p-8 text-center text-slate-400 text-sm">No subjects assigned yet. Ask an admin to assign you a subject.</div>
+        </div>
+      </div>
+
+      <!-- PANE: ADD STUDENT -->
+      <div class="pane" id="pane-addstudent">
+        <div class="card p-6" style="max-width:640px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Add a New Student</h2>
+          <p class="text-slate-400 text-xs mb-5">No password is set here — an activation link is generated. Send it to the student so they can set their own password. No admin approval needed for students.</p>
+          <div class="mb-4"><label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label><input type="text" id="as-fullname" class="form-inp" placeholder="e.g. Priya Singh" /></div>
+          <div class="mb-4"><label class="block text-slate-600 text-xs font-semibold mb-1">Email Address</label><input type="email" id="as-email" class="form-inp" placeholder="e.g. priya@gmail.com" /></div>
+          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Roll Number</label><input type="text" id="as-rollno" class="form-inp" placeholder="e.g. 24" /></div>
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Class</label><select id="as-class" class="form-sel w-full"><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
+            <div><label class="block text-slate-600 text-xs font-semibold mb-1">Section</label><select id="as-section" class="form-sel w-full"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div>
+            <div id="as-stream-wrap" class="hidden"><label class="block text-slate-600 text-xs font-semibold mb-1">Stream</label><select id="as-stream" class="form-sel w-full"><option value="Science">Science</option><option value="Commerce">Commerce</option><option value="Arts">Arts</option></select></div>
+          </div>
+          <button id="as-submit-btn" class="btn-primary">Create Student Account</button>
+          <div id="as-link-wrap" class="hidden mt-5 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <p class="text-emerald-700 text-xs font-bold mb-2">✓ Account created — send this activation link:</p>
+            <div class="flex items-center gap-2"><input type="text" id="as-link-input" class="form-inp mono" style="font-size:12px;" readonly /><button id="as-copy-btn" class="btn-outline" style="white-space:nowrap;padding:9px 14px;font-size:12px;">Copy</button></div>
+          </div>
+          <div id="as-result-wrap" class="hidden mt-5"><div class="payload-box" id="as-payload-box"></div></div>
+        </div>
+      </div>
+
+      <!-- PANE: REQUEST TEACHER ACCOUNT -->
+      <div class="pane" id="pane-requestteacher">
+        <div class="card p-6" style="max-width:680px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-1">Request a New Teacher Account</h2>
+          <p class="text-slate-400 text-xs mb-5">This goes to an admin for approval. You'll be notified once it's approved or rejected.</p>
+          <div class="mb-4"><label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label><input type="text" id="rt-fullname" class="form-inp" placeholder="e.g. Anjali Verma" /></div>
+          <div class="mb-4"><label class="block text-slate-600 text-xs font-semibold mb-1">Email Address</label><input type="email" id="rt-email" class="form-inp" placeholder="e.g. anjali@gmail.com" /></div>
+          <p class="text-slate-600 text-xs font-semibold mb-2">Subjects they'll teach (optional)</p>
+          <div id="rt-subject-grid" class="space-y-3 max-h-64 overflow-y-auto pr-2 mb-5"></div>
+          <button id="rt-submit-btn" class="btn-primary">Submit Request</button>
+          <div id="rt-result-wrap" class="hidden mt-5"><div class="payload-box" id="rt-payload-box"></div></div>
+        </div>
+      </div>
+
+      <!-- PANE: MY PROFILE -->
+      <div class="pane" id="pane-profile">
+        <div class="card p-6 mb-5" style="max-width:520px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">Profile Details</h2>
+          <div class="mb-3"><p class="text-slate-400 text-xs mb-0.5">Email</p><p class="text-slate-700 text-sm mono" id="prof-email">—</p></div>
+          <label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label>
+          <input type="text" id="prof-fullname" class="form-inp mb-4" />
+          <button id="prof-save-btn" class="btn-primary" style="width:auto;padding:10px 24px;">Save Name</button>
+        </div>
+        <div class="card p-6" style="max-width:520px;">
+          <h2 class="text-slate-800 font-bold text-sm mb-4">Change Password</h2>
+          <label class="block text-slate-600 text-xs font-semibold mb-1">Current Password</label>
+          <input type="password" id="prof-current-pw" class="form-inp mb-3" />
+          <label class="block text-slate-600 text-xs font-semibold mb-1">New Password</label>
+          <input type="password" id="prof-new-pw" class="form-inp mb-4" placeholder="min. 8 characters" />
+          <button id="prof-pw-btn" class="btn-primary" style="width:auto;padding:10px 24px;">Change Password</button>
+        </div>
+      </div>
+
+      <!-- PANE: STUDENT HISTORY (drill-down from roster) -->
+      <div class="pane" id="pane-studenthistory">
+        <button id="sh-back-btn" class="text-indigo-600 text-xs font-semibold mb-4 hover:underline">← Back</button>
+        <div class="card p-5 mb-5">
+          <h2 class="text-slate-800 font-bold text-base" id="sh-name">—</h2>
+          <p class="text-slate-400 text-xs" id="sh-meta">—</p>
+        </div>
+        <div class="grid lg:grid-cols-2 gap-5">
+          <div class="card overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100"><h3 class="text-slate-800 font-bold text-sm">Attendance History</h3></div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full"><thead><tr><th>Date</th><th class="text-center">Present</th></tr></thead><tbody id="sh-att-tbody"></tbody></table></div>
+          </div>
+          <div class="card overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100"><h3 class="text-slate-800 font-bold text-sm">Marks History</h3></div>
+            <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Exam</th><th class="text-right">Int.</th><th class="text-right">Ext.</th><th class="text-right">Total</th></tr></thead><tbody id="sh-marks-tbody"></tbody></table></div>
+          </div>
         </div>
       </div>
 
@@ -343,8 +420,11 @@
               data.roster.forEach(s => {
                 const tr = document.createElement('tr'); tr.dataset.roll = s.roll_no;
                 const checked = s.present === true ? 'checked' : '';
-                tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(s.roll_no||'—')+'</td><td>'+sanitise(s.full_name||'Unknown')+'</td><td style="color:#64748b;">Class '+sanitise(String(s.class||''))+'-'+sanitise(s.section||'')+'</td><td class="text-center"><input type="checkbox" class="checkbox-att att-present-chk" '+checked+' /></td>';
+                tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(s.roll_no||'—')+'</td><td><button class="sh-name-link text-indigo-600 hover:underline font-medium" data-code="'+sanitise(code)+'" data-sid="'+sanitise(s.student_id||'')+'" data-return="attendance">'+sanitise(s.full_name||'Unknown')+'</button></td><td style="color:#64748b;">Class '+sanitise(String(s.class||''))+'-'+sanitise(s.section||'')+'</td><td class="text-center"><input type="checkbox" class="checkbox-att att-present-chk" '+checked+' /></td>';
                 tbody.appendChild(tr);
+              });
+              document.querySelectorAll('#att-roster-tbody .sh-name-link').forEach(btn => {
+                btn.addEventListener('click', function() { openStudentHistory(this.dataset.code, this.dataset.sid, this.dataset.return); });
               });
             })
             .catch(() => showToast('Failed to load roster.', 'error'));
@@ -416,11 +496,14 @@
                 const tr = document.createElement('tr'); tr.dataset.roll = s.roll_no;
                 const intV = s.internal_marks != null ? s.internal_marks : '';
                 const extV = s.external_marks != null ? s.external_marks : '';
-                tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(s.roll_no||'—')+'</td><td>'+sanitise(s.full_name||'Unknown')+'</td>'
+                tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(s.roll_no||'—')+'</td><td><button class="sh-name-link text-indigo-600 hover:underline font-medium" data-code="'+sanitise(code)+'" data-sid="'+sanitise(s.student_id||'')+'" data-return="marks">'+sanitise(s.full_name||'Unknown')+'</button></td>'
                   + '<td class="text-center"><input type="number" min="0" max="30" class="marks-input marks-internal" value="'+intV+'" /></td>'
                   + '<td class="text-center"><input type="number" min="0" max="70" class="marks-input marks-external" value="'+extV+'" /></td>'
                   + '<td class="text-right marks-total" style="font-weight:700;">'+((intV !== '' && extV !== '') ? (Number(intV) + Number(extV)) : '—')+'</td>';
                 tbody.appendChild(tr);
+              });
+              document.querySelectorAll('#marks-roster-tbody .sh-name-link').forEach(btn => {
+                btn.addEventListener('click', function() { openStudentHistory(this.dataset.code, this.dataset.sid, this.dataset.return); });
               });
               document.querySelectorAll('.marks-internal').forEach(inp => inp.addEventListener('input', () => validateInput(inp, 30)));
               document.querySelectorAll('.marks-external').forEach(inp => inp.addEventListener('input', () => validateInput(inp, 70)));
@@ -454,6 +537,167 @@
             .catch(() => { showToast('Request failed.', 'error'); submitBtn.disabled = false; });
         });
       })();
+
+      // ─── Add Student (teacher: direct, no approval) ───
+      (function() {
+        const classSel = document.getElementById('as-class'), streamWrap = document.getElementById('as-stream-wrap'), streamSel = document.getElementById('as-stream');
+        function updateStreamVis() { streamWrap.classList.toggle('hidden', !['11','12'].includes(classSel.value)); }
+        classSel.addEventListener('change', updateStreamVis); updateStreamVis();
+
+        document.getElementById('as-copy-btn').addEventListener('click', function() {
+          const inp = document.getElementById('as-link-input'); inp.select(); inp.setSelectionRange(0, 99999);
+          navigator.clipboard.writeText(inp.value).then(() => showToast('Link copied.', 'success')).catch(() => document.execCommand('copy'));
+        });
+
+        document.getElementById('as-submit-btn').addEventListener('click', function() {
+          const payload = {
+            full_name: document.getElementById('as-fullname').value.trim(),
+            email: document.getElementById('as-email').value.trim(),
+            role: 'student',
+            roll_no: document.getElementById('as-rollno').value.trim(),
+            class_level: classSel.value,
+            section: document.getElementById('as-section').value
+          };
+          if (['11','12'].includes(payload.class_level)) payload.stream = streamSel.value;
+          if (!payload.full_name || payload.full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) { showToast('Enter a valid email.', 'error'); return; }
+          if (!payload.roll_no) { showToast('Enter a roll number.', 'error'); return; }
+
+          const btn = this; btn.disabled = true;
+          document.getElementById('as-link-wrap').classList.add('hidden');
+          fetch('/api/admin/create-user', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+              document.getElementById('as-result-wrap').classList.remove('hidden');
+              document.getElementById('as-payload-box').textContent = JSON.stringify(data, null, 2);
+              if (ok) {
+                showToast(data.message || 'Student created.', 'success');
+                if (data.activation_link) { document.getElementById('as-link-input').value = data.activation_link; document.getElementById('as-link-wrap').classList.remove('hidden'); }
+                document.getElementById('as-fullname').value = ''; document.getElementById('as-email').value = ''; document.getElementById('as-rollno').value = '';
+              } else { showToast(data.message || 'Could not create account.', 'error'); }
+              btn.disabled = false;
+            })
+            .catch(() => { showToast('Request failed.', 'error'); btn.disabled = false; });
+        });
+      })();
+
+      // ─── Request Teacher Account (needs admin approval) ───
+      function populateRequestSubjectGrid() {
+        const grid = document.getElementById('rt-subject-grid');
+        if (grid.dataset.built) return;
+        grid.innerHTML = '';
+        ['9', '10'].forEach(cls => {
+          const wrap = document.createElement('div');
+          wrap.innerHTML = '<p class="text-slate-500 text-xs font-bold mb-1.5">Class ' + cls + '</p>';
+          const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+          SUBJECT_MAP_RT[cls].forEach(subj => {
+            row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="rt-subj-check" data-class="'+cls+'" data-stream="" data-subject="'+subj+'"> '+subj+'</label>';
+          });
+          wrap.appendChild(row); grid.appendChild(wrap);
+        });
+        ['11', '12'].forEach(cls => {
+          ['Science', 'Commerce', 'Arts'].forEach(str => {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = '<p class="text-slate-500 text-xs font-bold mb-1.5">Class ' + cls + ' – ' + str + '</p>';
+            const row = document.createElement('div'); row.className = 'flex flex-wrap gap-3';
+            SUBJECT_MAP_RT[cls][str].forEach(subj => {
+              row.innerHTML += '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" class="rt-subj-check" data-class="'+cls+'" data-stream="'+str+'" data-subject="'+subj+'"> '+subj+'</label>';
+            });
+            wrap.appendChild(row); grid.appendChild(wrap);
+          });
+        });
+        grid.dataset.built = '1';
+      }
+      const SUBJECT_MAP_RT = {
+        '9': ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer Science'],
+        '10': ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer Science'],
+        '11': { Science: ['English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'], Commerce: ['English', 'Accountancy', 'Business Studies', 'Economics', 'Mathematics'], Arts: ['English', 'History', 'Political Science', 'Geography', 'Economics'] },
+        '12': { Science: ['English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science'], Commerce: ['English', 'Accountancy', 'Business Studies', 'Economics', 'Mathematics'], Arts: ['English', 'History', 'Political Science', 'Geography', 'Economics'] }
+      };
+      document.getElementById('rt-submit-btn').addEventListener('click', function() {
+        const payload = {
+          full_name: document.getElementById('rt-fullname').value.trim(),
+          email: document.getElementById('rt-email').value.trim(),
+          subjects: Array.from(document.querySelectorAll('.rt-subj-check:checked')).map(cb => ({ class_level: cb.dataset.class, stream: cb.dataset.stream || null, subject: cb.dataset.subject }))
+        };
+        if (!payload.full_name || payload.full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) { showToast('Enter a valid email.', 'error'); return; }
+        const btn = this; btn.disabled = true;
+        fetch('/api/teacher/request-teacher-account', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            document.getElementById('rt-result-wrap').classList.remove('hidden');
+            document.getElementById('rt-payload-box').textContent = JSON.stringify(data, null, 2);
+            showToast(data.message || (ok ? 'Request submitted.' : 'Failed.'), ok ? 'success' : 'error');
+            if (ok) { document.getElementById('rt-fullname').value = ''; document.getElementById('rt-email').value = ''; document.querySelectorAll('.rt-subj-check').forEach(cb => cb.checked = false); }
+            btn.disabled = false;
+          })
+          .catch(() => { showToast('Request failed.', 'error'); btn.disabled = false; });
+      });
+
+      // ─── My Profile ───
+      function loadMyProfile() {
+        fetch('/api/profile/me', { headers: authHeaders() }).then(res => res.json()).then(data => {
+          document.getElementById('prof-email').textContent = data.email || '—';
+          document.getElementById('prof-fullname').value = data.full_name || '';
+        }).catch(() => showToast('Failed to load profile.', 'error'));
+      }
+      document.getElementById('prof-save-btn').addEventListener('click', function() {
+        const full_name = document.getElementById('prof-fullname').value.trim();
+        if (!full_name || full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
+        fetch('/api/profile/me', { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ full_name }) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            showToast(data.message || (ok ? 'Saved.' : 'Failed.'), ok ? 'success' : 'error');
+            if (ok) { sessionStorage.setItem('cms_user', full_name); document.getElementById('sb-name').textContent = sanitise(full_name); }
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      });
+      document.getElementById('prof-pw-btn').addEventListener('click', function() {
+        const current_password = document.getElementById('prof-current-pw').value;
+        const new_password = document.getElementById('prof-new-pw').value;
+        if (!current_password || current_password.length < 8) { showToast('Enter your current password.', 'error'); return; }
+        if (!new_password || new_password.length < 8) { showToast('New password must be at least 8 characters.', 'error'); return; }
+        fetch('/api/profile/password', { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ current_password, new_password }) })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            showToast(data.message || (ok ? 'Password changed.' : 'Failed.'), ok ? 'success' : 'error');
+            if (ok) { document.getElementById('prof-current-pw').value = ''; document.getElementById('prof-new-pw').value = ''; }
+          })
+          .catch(() => showToast('Request failed.', 'error'));
+      });
+
+      // ─── Student History drill-down (from roster) ───
+      document.getElementById('sh-back-btn').addEventListener('click', function() { switchPane(window.__shReturnPane || 'attendance'); });
+      function openStudentHistory(courseCode, studentId, returnPane) {
+        window.__shReturnPane = returnPane;
+        switchPane('history');
+        document.getElementById('sh-name').textContent = 'Loading…';
+        document.getElementById('sh-att-tbody').innerHTML = '';
+        document.getElementById('sh-marks-tbody').innerHTML = '';
+        fetch('/api/teacher/course/' + encodeURIComponent(courseCode) + '/student/' + encodeURIComponent(studentId) + '/history', { headers: authHeaders() })
+          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) { showToast(data.message || 'Could not load history.', 'error'); switchPane(returnPane); return; }
+            document.getElementById('sh-name').textContent = data.student.full_name;
+            document.getElementById('sh-meta').textContent = 'Roll ' + (data.student.roll_no || '—') + ' · Class ' + (data.student.class || '—') + '-' + (data.student.section || '') + ' · ' + data.course.title;
+            const attTb = document.getElementById('sh-att-tbody');
+            if (!data.attendance.length) { attTb.innerHTML = '<tr><td colspan="2" class="text-center text-slate-400 py-6">No attendance marked yet.</td></tr>'; }
+            else data.attendance.forEach(a => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = '<td class="mono" style="font-size:12px;">'+sanitise(a.date)+'</td><td class="text-center">'+(a.present ? '<span class="text-emerald-600 font-bold">✓</span>' : '<span class="text-rose-500 font-bold">✗</span>')+'</td>';
+              attTb.appendChild(tr);
+            });
+            const marksTb = document.getElementById('sh-marks-tbody');
+            if (!data.marks.length) { marksTb.innerHTML = '<tr><td colspan="4" class="text-center text-slate-400 py-6">No marks entered yet.</td></tr>'; }
+            else data.marks.forEach(m => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = '<td class="capitalize">'+sanitise(m.exam_type)+'</td><td class="text-right">'+m.internal_marks+'</td><td class="text-right">'+m.external_marks+'</td><td class="text-right font-bold">'+m.total_marks+'</td>';
+              marksTb.appendChild(tr);
+            });
+          })
+          .catch(() => { showToast('Failed to load history.', 'error'); switchPane(returnPane); });
+      }
 
       loadOverviewStats();
 
@@ -608,6 +852,10 @@
         attendance: { pane: 'pane-attendance', title: 'Mark Attendance', sub: 'Attendance Grid – Secure Submit' },
         marks: { pane: 'pane-marks', title: 'Enter Marks', sub: 'Boundary Validated Marks Entry' },
         courses: { pane: 'pane-courses', title: 'My Subjects', sub: 'Access Controlled Subject List' },
+        addstudent: { pane: 'pane-addstudent', title: 'Add Student', sub: 'Create a New Student Account' },
+        requestteacher: { pane: 'pane-requestteacher', title: 'Request Teacher Account', sub: 'Needs Admin Approval' },
+        profile: { pane: 'pane-profile', title: 'My Profile', sub: 'Edit Name & Password' },
+        history: { pane: 'pane-studenthistory', title: 'Student History', sub: 'Attendance & Marks Detail' },
         broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
       };
       function switchPane(k) {
@@ -628,6 +876,10 @@
           populateCourseSelect('marks-course-sel');
         } else if (k === 'courses') {
           loadCoursesPane();
+        } else if (k === 'requestteacher') {
+          populateRequestSubjectGrid();
+        } else if (k === 'profile') {
+          loadMyProfile();
         }
       }
       document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
