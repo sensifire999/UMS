@@ -67,6 +67,18 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// Stricter, dedicated limiter just for login — the client-side lockout in index.html
+// is only a UX nicety (a script hitting the API directly can ignore it entirely), so
+// the real brute-force defense has to live here, server-side, per IP.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip,
+  message: { message: 'Too many login attempts from this IP. Try again in 15 minutes.' }
+});
+
 // ─── Supabase Clients ───
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -74,7 +86,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 // ─── JWT Helpers ───
 function generateToken(user) {
   return jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
+    { id: user.id, email: user.email, role: user.role },
     JWT_SECRET,
     { expiresIn: '1h' }
   );
@@ -103,9 +115,10 @@ function verifyTokenAPI(req, res, next) {
   next();
 }
 
-function requireRole(role) {
+function requireRole(roles) {
+  const allowed = Array.isArray(roles) ? roles : [roles];
   return (req, res, next) => {
-    if (!req.user || req.user.role !== role) {
+    if (!req.user || !allowed.includes(req.user.role)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
     next();
@@ -155,6 +168,13 @@ app.use(express.static(publicPath));
 
 // ─── Root route ───
 app.get('/', (req, res) => {
+  const csrfToken = crypto.randomBytes(24).toString('hex');
+  res.cookie('csrf_token', csrfToken, {
+    httpOnly: false, // JS needs to read this to echo it back
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 600000 // 10 minutes — enough time to fill the login form
+  });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
@@ -235,6 +255,25 @@ async function findOrCreateCourse(classLevel, stream, subject) {
   return created.id;
 }
 
+// ─── Account Activation Links ───
+async function createActivationToken(userId) {
+  // Invalidate any previous unused tokens for this user first
+  await supabaseAdmin.from('activation_tokens').update({ used: true }).eq('user_id', userId).eq('used', false);
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const { error } = await supabaseAdmin.from('activation_tokens').insert({
+    user_id: userId, token, expires_at: expiresAt.toISOString(), used: false
+  });
+  if (error) throw error;
+  return token;
+}
+function activationLink(req, token) {
+  return `${req.protocol}://${req.get('host')}/activate.html?token=${token}`;
+}
+function isValidEmail(str) {
+  return typeof str === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
+}
+
 // ─── 1. CAPTCHA ───
 app.get('/api/auth/captcha', (req, res) => {
   const ops = ['+', '-', '*'];
@@ -255,11 +294,10 @@ app.get('/api/auth/captcha', (req, res) => {
 });
 
 // ─── 2. Login ───
-app.post('/api/auth/login', [
-  body('username').isLength({ min: 3 }).trim().escape(),
+app.post('/api/auth/login', loginLimiter, [
+  body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 8 }),
   body('role').isIn(['student', 'teacher', 'admin']),
-  // FIX 3: .toInt() add kiya — string "5" ko number 5 mein convert karo
   body('captcha_answer').isInt().toInt(),
   body('captcha_id').notEmpty(),
   body('device_fingerprint').optional().isString()
@@ -270,28 +308,28 @@ app.post('/api/auth/login', [
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
 
-  const { username, password, role, captcha_answer, captcha_id, device_fingerprint } = req.body;
+  const { email, password, role, captcha_answer, captcha_id, device_fingerprint, _csrf } = req.body;
+
+  const cookieCsrf = req.cookies && req.cookies.csrf_token;
+  if (!cookieCsrf || !_csrf || cookieCsrf !== _csrf) {
+    await supabaseAdmin.from('security_logs').insert({
+      ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'CSRF_MISMATCH', details: { email }, severity: 'BLOCK'
+    });
+    return res.status(403).json({ message: 'Session expired. Please refresh the page and try again.' });
+  }
 
   if (!captchaStore.has(captcha_id)) {
     return res.status(400).json({ message: 'CAPTCHA expired or invalid. Please refresh.' });
   }
   const captcha = captchaStore.get(captcha_id);
 
-  // FIX 3 cont: parseInt se ensure karo dono Number hain comparison ke time
   if (Number(captcha.answer) !== parseInt(captcha_answer, 10)) {
     captchaStore.delete(captcha_id); // ek baar use, phir delete
     return res.status(400).json({ message: 'Incorrect CAPTCHA answer.' });
   }
   captchaStore.delete(captcha_id);
 
-  // FIX 4: Username mein email nahi, sirf username — server khud email banata hai
-  // Agar user galti se poora email type kar de toh handle karo
-  let cleanUsername = username;
-  if (cleanUsername.includes('@')) {
-    cleanUsername = cleanUsername.split('@')[0];
-  }
-
-  const email = `${cleanUsername}@umslaxmannagar.edu`;
   console.log(`[LOGIN] Attempting login for: ${email}, role: ${role}`);
 
   try {
@@ -306,15 +344,15 @@ app.post('/api/auth/login', [
         user_agent: req.headers['user-agent'],
         event_type: 'FAILED_LOGIN',
         browser_fingerprint: device_fingerprint,
-        details: { username: cleanUsername, role, error: authError.message },
+        details: { email, role, error: authError.message },
         severity: 'WARN'
       });
-      return res.status(401).json({ message: 'Invalid credentials. Check username and password.' });
+      return res.status(401).json({ message: 'Invalid credentials. Check email and password.' });
     }
 
     const { data: profile, error: profError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, role')
+      .select('id, full_name, role, activated')
       .eq('id', authData.user.id)
       .single();
 
@@ -333,9 +371,8 @@ app.post('/api/auth/login', [
       return res.status(401).json({ message: `Role mismatch. Your account role is: ${profile.role}` });
     }
 
-    const token = generateToken({ id: profile.id, username: cleanUsername, role: profile.role });
+    const token = generateToken({ id: profile.id, email, role: profile.role });
 
-    // FIX 5: Cookie sameSite — Render (HTTPS) pe 'none' nahi, 'strict' theek hai
     res.cookie('cms_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -353,7 +390,7 @@ app.post('/api/auth/login', [
     });
 
     console.log(`[LOGIN] Success: ${email}, role: ${profile.role}`);
-    res.json({ token, role: profile.role, username: cleanUsername, full_name: profile.full_name });
+    res.json({ token, role: profile.role, email, full_name: profile.full_name });
   } catch (err) {
     console.error('[LOGIN] Unexpected error:', err);
     res.status(500).json({ message: 'Internal server error. Try again.' });
@@ -411,6 +448,7 @@ app.get('/api/student/dashboard', verifyTokenAPI, requireRole('student'), async 
       .limit(5);
     res.json({
       profile,
+      email: req.user.email,
       class_level: profile.students_data ? profile.students_data.class : null,
       section: profile.students_data ? profile.students_data.section : null,
       stream: profile.students_data ? profile.students_data.stream : null,
@@ -556,7 +594,15 @@ app.put('/api/teacher/modify-grades', verifyTokenAPI, requireRole('teacher'), [
 });
 
 // ─── 6. Bulk CSV Upload ───
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB hard cap — matches frontend, but now actually enforced server-side
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.csv') return cb(new Error('Only CSV files allowed'));
+    cb(null, true);
+  }
+});
 app.post('/api/admin/bulk-upload', verifyTokenAPI, requireRole('admin'), upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
@@ -871,7 +917,7 @@ app.get('/api/admin/users', verifyTokenAPI, requireRole('admin'), async (req, re
     const { role, search } = req.query;
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, full_name, role, created_at, students_data(roll_no, class, section, stream)')
+      .select('id, full_name, role, created_at, activated, students_data(roll_no, class, section, stream)')
       .order('created_at', { ascending: false })
       .limit(500);
     if (role && ['student', 'teacher', 'admin'].includes(role)) {
@@ -887,6 +933,7 @@ app.get('/api/admin/users', verifyTokenAPI, requireRole('admin'), async (req, re
       full_name: u.full_name,
       role: u.role,
       created_at: u.created_at,
+      activated: !!u.activated,
       roll_no: u.students_data ? u.students_data.roll_no : null,
       class: u.students_data ? u.students_data.class : null,
       section: u.students_data ? u.students_data.section : null,
@@ -899,12 +946,11 @@ app.get('/api/admin/users', verifyTokenAPI, requireRole('admin'), async (req, re
   }
 });
 
-// ─── 11. Admin: Create Student / Teacher Account ───
-app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
+// ─── 11. Create Student / Teacher Account (Admin: any role. Teacher: students only, no approval needed) ───
+app.post('/api/admin/create-user', verifyTokenAPI, requireRole(['admin', 'teacher']), [
   body('full_name').trim().isLength({ min: 3 }).withMessage('Full name must be at least 3 characters'),
-  body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-  body('role').isIn(['student', 'teacher']).withMessage('Role must be student or teacher'),
+  body('email').isEmail().withMessage('Enter a valid email address'),
+  body('role').isIn(['student', 'teacher', 'admin']).withMessage('Role must be student, teacher, or admin'),
   body('roll_no').optional({ checkFalsy: true }).trim(),
   body('class_level').optional({ checkFalsy: true }).isIn(VALID_CLASSES),
   body('section').optional({ checkFalsy: true }).isIn(VALID_SECTIONS),
@@ -915,8 +961,13 @@ app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
   if (!errors.isEmpty()) {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
-  const { full_name, username, password, role, roll_no, class_level, section, stream, subjects } = req.body;
-  const adminId = req.user.id;
+  const { full_name, email, role, roll_no, class_level, section, stream, subjects } = req.body;
+  const creatorId = req.user.id, creatorRole = req.user.role;
+
+  // Teachers can only create student accounts directly — a teacher account needs admin approval (see /api/teacher/request-teacher-account)
+  if (creatorRole === 'teacher' && role !== 'student') {
+    return res.status(403).json({ message: 'Teachers can create student accounts directly. To add a new teacher, submit a request for admin approval.' });
+  }
 
   if (role === 'student') {
     if (!roll_no || !class_level || !section) {
@@ -927,21 +978,19 @@ app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
     }
   }
 
-  const cleanUsername = username.includes('@') ? username.split('@')[0] : username;
-  const email = `${cleanUsername}@umslaxmannagar.edu`;
   let newUserId = null;
-
   try {
+    const placeholderPassword = crypto.randomBytes(24).toString('hex');
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email, password, email_confirm: true
+      email, password: placeholderPassword, email_confirm: true
     });
     if (createErr || !created || !created.user) {
-      return res.status(400).json({ message: (createErr && createErr.message) || 'Could not create account. Username may already exist.' });
+      return res.status(400).json({ message: (createErr && createErr.message) || 'Could not create account. Email may already be in use.' });
     }
     newUserId = created.user.id;
 
     const { error: profErr } = await supabaseAdmin.from('profiles').insert({
-      id: newUserId, full_name, role
+      id: newUserId, full_name, role, activated: false
     });
     if (profErr) throw profErr;
 
@@ -970,20 +1019,23 @@ app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
       }
     }
 
+    const token = await createActivationToken(newUserId);
+    const link = activationLink(req, token);
+
     await supabaseAdmin.from('security_logs').insert({
-      user_id: adminId,
+      user_id: creatorId,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
       event_type: 'USER_CREATED',
-      details: { new_user_id: newUserId, role, full_name, username: cleanUsername },
+      details: { new_user_id: newUserId, role, full_name, email, created_by_role: creatorRole },
       severity: 'OK'
     });
 
     res.json({
-      message: `${role === 'student' ? 'Student' : 'Teacher'} account created successfully`,
+      message: `${role === 'student' ? 'Student' : 'Teacher'} account created. Send the activation link below so they can set their password.`,
       user_id: newUserId,
-      username: cleanUsername,
-      email
+      email,
+      activation_link: link
     });
   } catch (err) {
     console.error('Create user error:', err);
@@ -991,6 +1043,63 @@ app.post('/api/admin/create-user', verifyTokenAPI, requireRole('admin'), [
       try { await supabaseAdmin.auth.admin.deleteUser(newUserId); } catch (cleanupErr) { console.error('Rollback failed:', cleanupErr); }
     }
     res.status(500).json({ message: 'Internal error creating user. Account was rolled back.' });
+  }
+});
+
+// ─── 11b. Account Activation: validate token (used by activate.html to render the form) ───
+app.get('/api/auth/activation-info', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ message: 'Missing token' });
+  try {
+    const { data: row, error } = await supabaseAdmin
+      .from('activation_tokens').select('user_id, expires_at, used').eq('token', token).maybeSingle();
+    if (error) throw error;
+    if (!row) return res.status(404).json({ message: 'Invalid activation link.' });
+    if (row.used) return res.status(400).json({ message: 'This activation link has already been used.' });
+    if (new Date(row.expires_at) < new Date()) return res.status(400).json({ message: 'This activation link has expired. Ask your admin/teacher to resend it.' });
+
+    const { data: profile, error: pErr } = await supabaseAdmin
+      .from('profiles').select('full_name, role').eq('id', row.user_id).single();
+    if (pErr || !profile) return res.status(404).json({ message: 'Account not found.' });
+
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
+    res.json({ full_name: profile.full_name, role: profile.role, email: authUser && authUser.user ? authUser.user.email : null });
+  } catch (err) {
+    console.error('Activation info error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// ─── 11c. Account Activation: set password ───
+app.post('/api/auth/activate', [
+  body('token').notEmpty(),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { token, password } = req.body;
+  try {
+    const { data: row, error } = await supabaseAdmin
+      .from('activation_tokens').select('id, user_id, expires_at, used').eq('token', token).maybeSingle();
+    if (error) throw error;
+    if (!row) return res.status(404).json({ message: 'Invalid activation link.' });
+    if (row.used) return res.status(400).json({ message: 'This activation link has already been used.' });
+    if (new Date(row.expires_at) < new Date()) return res.status(400).json({ message: 'This activation link has expired.' });
+
+    const { error: pwErr } = await supabaseAdmin.auth.admin.updateUserById(row.user_id, { password });
+    if (pwErr) throw pwErr;
+
+    await supabaseAdmin.from('activation_tokens').update({ used: true }).eq('id', row.id);
+    await supabaseAdmin.from('profiles').update({ activated: true, updated_at: new Date() }).eq('id', row.user_id);
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: row.user_id, ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'ACCOUNT_ACTIVATED', severity: 'OK'
+    });
+
+    res.json({ message: 'Account activated. You can now log in.' });
+  } catch (err) {
+    console.error('Activation error:', err);
+    res.status(500).json({ message: 'Internal error activating account' });
   }
 });
 
@@ -1047,6 +1156,7 @@ app.get('/api/teacher/course/:code/roster', verifyTokenAPI, requireRole('teacher
       enrollments.forEach(e => { enrollMap[e.student_id] = e.id; });
       roster = (studentsData || []).map(s => ({
         enrollment_id: enrollMap[s.id],
+        student_id: s.id,
         roll_no: s.roll_no,
         full_name: s.profiles ? s.profiles.full_name : 'Unknown',
         class: s.class,
@@ -1128,6 +1238,458 @@ app.get('/api/teacher/stats', verifyTokenAPI, requireRole('teacher'), async (req
   }
 });
 
+// ─── 15. Teacher: Request a New Teacher Account (needs admin approval) ───
+app.post('/api/teacher/request-teacher-account', verifyTokenAPI, requireRole('teacher'), [
+  body('full_name').trim().isLength({ min: 3 }).withMessage('Full name must be at least 3 characters'),
+  body('email').isEmail().withMessage('Enter a valid email address'),
+  body('subjects').optional().isArray()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { full_name, email, subjects } = req.body;
+  try {
+    const { data, error } = await supabaseAdmin.from('teacher_requests').insert({
+      requested_by: req.user.id, full_name, email,
+      subjects: Array.isArray(subjects) ? subjects : [],
+      status: 'pending'
+    }).select('id').single();
+    if (error) throw error;
+    res.json({ message: 'Request submitted. An admin will review it.', request_id: data.id });
+  } catch (err) {
+    console.error('Teacher request error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// ─── 16. Admin: List Teacher Requests ───
+app.get('/api/admin/teacher-requests', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  try {
+    const { status } = req.query;
+    let query = supabaseAdmin.from('teacher_requests').select('*, profiles!teacher_requests_requested_by_fkey(full_name)').order('created_at', { ascending: false });
+    if (status && ['pending', 'approved', 'rejected'].includes(status)) query = query.eq('status', status);
+    const { data, error } = await query;
+    if (error) throw error;
+    const shaped = (data || []).map(r => ({
+      id: r.id, full_name: r.full_name, email: r.email, subjects: r.subjects,
+      status: r.status, created_at: r.created_at,
+      requested_by_name: r.profiles ? r.profiles.full_name : 'Unknown'
+    }));
+    res.json(shaped);
+  } catch (err) {
+    console.error('Teacher requests list error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// ─── 17. Admin: Approve / Reject Teacher Request ───
+app.post('/api/admin/teacher-requests/:id/approve', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  let newUserId = null;
+  try {
+    const { data: reqRow, error: rErr } = await supabaseAdmin.from('teacher_requests').select('*').eq('id', id).single();
+    if (rErr || !reqRow) return res.status(404).json({ message: 'Request not found' });
+    if (reqRow.status !== 'pending') return res.status(400).json({ message: 'This request has already been ' + reqRow.status });
+
+    const placeholderPassword = crypto.randomBytes(24).toString('hex');
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: reqRow.email, password: placeholderPassword, email_confirm: true
+    });
+    if (createErr || !created || !created.user) {
+      return res.status(400).json({ message: (createErr && createErr.message) || 'Could not create account. Email may already be in use.' });
+    }
+    newUserId = created.user.id;
+
+    const { error: profErr } = await supabaseAdmin.from('profiles').insert({
+      id: newUserId, full_name: reqRow.full_name, role: 'teacher', activated: false
+    });
+    if (profErr) throw profErr;
+
+    const subjects = Array.isArray(reqRow.subjects) ? reqRow.subjects : [];
+    for (const combo of subjects) {
+      if (!combo || !combo.class_level || !combo.subject) continue;
+      if (!VALID_CLASSES.includes(String(combo.class_level))) continue;
+      const comboStream = ['11', '12'].includes(String(combo.class_level)) ? combo.stream : null;
+      if (['11', '12'].includes(String(combo.class_level)) && !VALID_STREAMS.includes(comboStream)) continue;
+      const courseId = await findOrCreateCourse(combo.class_level, comboStream, combo.subject);
+      await supabaseAdmin.from('course_assignments').insert({ teacher_id: newUserId, course_id: courseId });
+    }
+
+    const token = await createActivationToken(newUserId);
+    const link = activationLink(req, token);
+
+    await supabaseAdmin.from('teacher_requests').update({
+      status: 'approved', reviewed_by: req.user.id, reviewed_at: new Date()
+    }).eq('id', id);
+
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id, ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'TEACHER_REQUEST_APPROVED', details: { request_id: id, new_user_id: newUserId }, severity: 'OK'
+    });
+
+    res.json({ message: 'Teacher account created. Send them the activation link.', user_id: newUserId, email: reqRow.email, activation_link: link });
+  } catch (err) {
+    console.error('Approve request error:', err);
+    if (newUserId) { try { await supabaseAdmin.auth.admin.deleteUser(newUserId); } catch (e) { console.error('Rollback failed:', e); } }
+    res.status(500).json({ message: 'Internal error approving request' });
+  }
+});
+
+app.post('/api/admin/teacher-requests/:id/reject', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: reqRow, error: rErr } = await supabaseAdmin.from('teacher_requests').select('status').eq('id', id).single();
+    if (rErr || !reqRow) return res.status(404).json({ message: 'Request not found' });
+    if (reqRow.status !== 'pending') return res.status(400).json({ message: 'This request has already been ' + reqRow.status });
+    await supabaseAdmin.from('teacher_requests').update({
+      status: 'rejected', reviewed_by: req.user.id, reviewed_at: new Date()
+    }).eq('id', id);
+    res.json({ message: 'Request rejected.' });
+  } catch (err) {
+    console.error('Reject request error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// ─── 18. Admin: Edit User Details ───
+app.put('/api/admin/users/:id', verifyTokenAPI, requireRole('admin'), [
+  body('full_name').optional({ checkFalsy: true }).trim().isLength({ min: 3 }),
+  body('roll_no').optional({ checkFalsy: true }).trim(),
+  body('class_level').optional({ checkFalsy: true }).isIn(VALID_CLASSES),
+  body('section').optional({ checkFalsy: true }).isIn(VALID_SECTIONS),
+  body('stream').optional({ checkFalsy: true }).isIn(VALID_STREAMS)
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { id } = req.params;
+  const { full_name, roll_no, class_level, section, stream } = req.body;
+  try {
+    const { data: profile, error: pErr } = await supabaseAdmin.from('profiles').select('id, role').eq('id', id).single();
+    if (pErr || !profile) return res.status(404).json({ message: 'User not found' });
+
+    if (full_name) {
+      await supabaseAdmin.from('profiles').update({ full_name, updated_at: new Date() }).eq('id', id);
+    }
+    if (profile.role === 'student' && (roll_no || class_level || section || stream)) {
+      const patch = {};
+      if (roll_no) patch.roll_no = roll_no;
+      if (class_level) patch.class = class_level;
+      if (section) patch.section = section;
+      if (stream) patch.stream = stream;
+      const { error: sErr } = await supabaseAdmin.from('students_data').update(patch).eq('id', id);
+      if (sErr) throw sErr;
+    }
+    res.json({ message: 'User updated successfully' });
+  } catch (err) {
+    console.error('Edit user error:', err);
+    res.status(500).json({ message: 'Internal error updating user' });
+  }
+});
+
+// ─── 19. Admin: Delete User ───
+app.delete('/api/admin/users/:id', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  if (id === req.user.id) return res.status(400).json({ message: 'You cannot delete your own account.' });
+  try {
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+    if (error) throw error;
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id, ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'USER_DELETED', details: { deleted_user_id: id }, severity: 'WARN'
+    });
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    res.status(500).json({ message: 'Internal error deleting user' });
+  }
+});
+
+// ─── 20. Admin: Reset a User's Password (re-sends a fresh activation link) ───
+app.post('/api/admin/users/:id/reset-password', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: profile, error: pErr } = await supabaseAdmin.from('profiles').select('id').eq('id', id).single();
+    if (pErr || !profile) return res.status(404).json({ message: 'User not found' });
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(id);
+    const placeholderPassword = crypto.randomBytes(24).toString('hex');
+    await supabaseAdmin.auth.admin.updateUserById(id, { password: placeholderPassword });
+    await supabaseAdmin.from('profiles').update({ activated: false }).eq('id', id);
+    const token = await createActivationToken(id);
+    const link = activationLink(req, token);
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id, ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'PASSWORD_RESET_ISSUED', details: { target_user_id: id }, severity: 'WARN'
+    });
+    res.json({ message: 'Password reset. Send this new link so they can set a fresh password.', activation_link: link, email: authUser && authUser.user ? authUser.user.email : null });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ message: 'Internal error resetting password' });
+  }
+});
+
+// ─── 21. Admin: View / Update a Student's Enrolled Subjects ───
+app.get('/api/admin/student/:id/subjects', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: student, error: sErr } = await supabaseAdmin
+      .from('students_data').select('id, roll_no, class, section, stream, profiles(full_name)').eq('id', id).single();
+    if (sErr || !student) return res.status(404).json({ message: 'Student not found' });
+
+    const allSubjects = getSubjectsForClass(student.class, student.stream);
+    const { data: enrollments, error: eErr } = await supabaseAdmin
+      .from('enrollments').select('id, courses(code, title)').eq('student_id', id);
+    if (eErr) throw eErr;
+    const enrolledCodes = new Set((enrollments || []).map(e => e.courses ? e.courses.code : null).filter(Boolean));
+
+    const subjectsWithStatus = allSubjects.map(subj => {
+      const code = courseCodeFor(student.class, student.stream, subj);
+      return { subject: subj, code, enrolled: enrolledCodes.has(code) };
+    });
+
+    res.json({
+      student: {
+        id: student.id, full_name: student.profiles ? student.profiles.full_name : 'Unknown',
+        roll_no: student.roll_no, class: student.class, section: student.section, stream: student.stream
+      },
+      subjects: subjectsWithStatus
+    });
+  } catch (err) {
+    console.error('Get student subjects error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+app.post('/api/admin/student/:id/subjects', verifyTokenAPI, requireRole('admin'), [
+  body('subjects').isArray().withMessage('subjects must be an array of subject names')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { id } = req.params;
+  const { subjects } = req.body;
+  try {
+    const { data: student, error: sErr } = await supabaseAdmin.from('students_data').select('id, class, stream').eq('id', id).single();
+    if (sErr || !student) return res.status(404).json({ message: 'Student not found' });
+
+    const validSubjects = getSubjectsForClass(student.class, student.stream);
+    const desired = subjects.filter(s => validSubjects.includes(s));
+    const desiredCodes = new Set(desired.map(s => courseCodeFor(student.class, student.stream, s)));
+
+    const { data: currentEnrollments, error: eErr } = await supabaseAdmin
+      .from('enrollments').select('id, courses(code)').eq('student_id', id);
+    if (eErr) throw eErr;
+
+    const currentCodes = new Map(
+      (currentEnrollments || []).filter(e => e.courses).map(e => [e.courses.code, e.id])
+    );
+
+    // Remove enrollments for subjects no longer desired
+    for (const [code, enrollId] of currentCodes.entries()) {
+      if (!desiredCodes.has(code)) {
+        await supabaseAdmin.from('enrollments').delete().eq('id', enrollId);
+      }
+    }
+    // Add enrollments for newly desired subjects
+    for (const subj of desired) {
+      const code = courseCodeFor(student.class, student.stream, subj);
+      if (!currentCodes.has(code)) {
+        const courseId = await findOrCreateCourse(student.class, student.stream, subj);
+        await supabaseAdmin.from('enrollments').insert({ student_id: id, course_id: courseId });
+      }
+    }
+
+    res.json({ message: 'Subjects updated successfully' });
+  } catch (err) {
+    console.error('Update student subjects error:', err);
+    res.status(500).json({ message: 'Internal error updating subjects' });
+  }
+});
+
+// ─── 22. Admin: View / Update a Teacher's Subject Assignments ───
+app.get('/api/admin/teacher/:id/subjects', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data: teacher, error: tErr } = await supabaseAdmin.from('profiles').select('id, full_name, role').eq('id', id).single();
+    if (tErr || !teacher || teacher.role !== 'teacher') return res.status(404).json({ message: 'Teacher not found' });
+
+    const { data: assigned, error: aErr } = await supabaseAdmin
+      .from('course_assignments').select('id, courses(code, title)').eq('teacher_id', id);
+    if (aErr) throw aErr;
+    const assignedCodes = new Set((assigned || []).map(a => a.courses ? a.courses.code : null).filter(Boolean));
+
+    const allCombos = [];
+    ['9', '10'].forEach(cls => SUBJECTS_BY_CLASS[cls].forEach(subj => allCombos.push({ class_level: cls, stream: null, subject: subj })));
+    ['11', '12'].forEach(cls => VALID_STREAMS.forEach(str => SUBJECTS_BY_CLASS[cls][str].forEach(subj => allCombos.push({ class_level: cls, stream: str, subject: subj }))));
+
+    const combosWithStatus = allCombos.map(c => {
+      const code = courseCodeFor(c.class_level, c.stream, c.subject);
+      return { ...c, code, assigned: assignedCodes.has(code) };
+    });
+
+    res.json({ teacher: { id: teacher.id, full_name: teacher.full_name }, combos: combosWithStatus });
+  } catch (err) {
+    console.error('Get teacher subjects error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+app.post('/api/admin/teacher/:id/subjects', verifyTokenAPI, requireRole('admin'), [
+  body('subjects').isArray()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { id } = req.params;
+  const { subjects } = req.body;
+  try {
+    const { data: teacher, error: tErr } = await supabaseAdmin.from('profiles').select('id, role').eq('id', id).single();
+    if (tErr || !teacher || teacher.role !== 'teacher') return res.status(404).json({ message: 'Teacher not found' });
+
+    const desiredCodes = new Set();
+    for (const combo of subjects) {
+      if (!combo || !combo.class_level || !combo.subject) continue;
+      desiredCodes.add(courseCodeFor(combo.class_level, combo.stream || null, combo.subject));
+    }
+
+    const { data: currentAssigns, error: aErr } = await supabaseAdmin
+      .from('course_assignments').select('id, courses(code)').eq('teacher_id', id);
+    if (aErr) throw aErr;
+    const currentCodes = new Map((currentAssigns || []).filter(a => a.courses).map(a => [a.courses.code, a.id]));
+
+    for (const [code, assignId] of currentCodes.entries()) {
+      if (!desiredCodes.has(code)) await supabaseAdmin.from('course_assignments').delete().eq('id', assignId);
+    }
+    for (const combo of subjects) {
+      if (!combo || !combo.class_level || !combo.subject) continue;
+      const comboStream = ['11', '12'].includes(String(combo.class_level)) ? combo.stream : null;
+      const code = courseCodeFor(combo.class_level, comboStream, combo.subject);
+      if (!currentCodes.has(code)) {
+        const courseId = await findOrCreateCourse(combo.class_level, comboStream, combo.subject);
+        await supabaseAdmin.from('course_assignments').insert({ teacher_id: id, course_id: courseId });
+      }
+    }
+
+    res.json({ message: 'Teacher subjects updated successfully' });
+  } catch (err) {
+    console.error('Update teacher subjects error:', err);
+    res.status(500).json({ message: 'Internal error updating subjects' });
+  }
+});
+
+// ─── 23. Admin: Role-Change History & Upload History ───
+app.get('/api/admin/role-audit', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('role_audit').select('*').order('created_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Role audit error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+app.get('/api/admin/upload-logs', verifyTokenAPI, requireRole('admin'), async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('upload_logs').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Upload logs error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// ─── 24. Any logged-in user: View / Edit own profile, change own password ───
+app.get('/api/profile/me', verifyTokenAPI, async (req, res) => {
+  try {
+    const { data: profile, error } = await supabaseAdmin.from('profiles').select('full_name, role, activated').eq('id', req.user.id).single();
+    if (error || !profile) return res.status(404).json({ message: 'Profile not found' });
+    res.json({ full_name: profile.full_name, role: profile.role, email: req.user.email });
+  } catch (err) {
+    console.error('Get profile error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+app.put('/api/profile/me', verifyTokenAPI, [
+  body('full_name').trim().isLength({ min: 3 }).withMessage('Full name must be at least 3 characters')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  try {
+    await supabaseAdmin.from('profiles').update({ full_name: req.body.full_name, updated_at: new Date() }).eq('id', req.user.id);
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ message: 'Internal error updating profile' });
+  }
+});
+
+app.put('/api/profile/password', verifyTokenAPI, [
+  body('current_password').isLength({ min: 8 }),
+  body('new_password').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
+  const { current_password, new_password } = req.body;
+  try {
+    const { data: authUser, error: getErr } = await supabaseAdmin.auth.admin.getUserById(req.user.id);
+    if (getErr || !authUser || !authUser.user) return res.status(404).json({ message: 'Account not found' });
+
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({ email: authUser.user.email, password: current_password });
+    if (verifyErr) return res.status(401).json({ message: 'Current password is incorrect' });
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password: new_password });
+    if (updErr) throw updErr;
+
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id, ip_address: req.ip, user_agent: req.headers['user-agent'],
+      event_type: 'PASSWORD_CHANGED', severity: 'OK'
+    });
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('Password change error:', err);
+    res.status(500).json({ message: 'Internal error changing password' });
+  }
+});
+
+// ─── 25. Teacher: Drill-down history for one student in a course ───
+app.get('/api/teacher/course/:code/student/:studentId/history', verifyTokenAPI, requireRole('teacher'), async (req, res) => {
+  const { code, studentId } = req.params;
+  const teacherId = req.user.id;
+  try {
+    const { data: course, error: cErr } = await supabaseAdmin.from('courses').select('id, code, title').eq('code', code).single();
+    if (cErr || !course) return res.status(404).json({ message: 'Course not found' });
+    const { data: assign, error: aErr } = await supabaseAdmin
+      .from('course_assignments').select('id').eq('teacher_id', teacherId).eq('course_id', course.id).single();
+    if (aErr || !assign) return res.status(403).json({ message: 'You are not assigned to this course' });
+
+    const { data: enrollment, error: eErr } = await supabaseAdmin
+      .from('enrollments').select('id, students_data(roll_no, class, section, profiles(full_name))')
+      .eq('course_id', course.id).eq('student_id', studentId).single();
+    if (eErr || !enrollment) return res.status(404).json({ message: 'Student not enrolled in this course' });
+
+    const { data: attendance } = await supabaseAdmin
+      .from('attendance').select('date, present').eq('enrollment_id', enrollment.id).order('date', { ascending: false });
+    const { data: marks } = await supabaseAdmin
+      .from('marks').select('exam_type, internal_marks, external_marks, total_marks').eq('enrollment_id', enrollment.id);
+
+    res.json({
+      course,
+      student: {
+        full_name: enrollment.students_data && enrollment.students_data.profiles ? enrollment.students_data.profiles.full_name : 'Unknown',
+        roll_no: enrollment.students_data ? enrollment.students_data.roll_no : null,
+        class: enrollment.students_data ? enrollment.students_data.class : null,
+        section: enrollment.students_data ? enrollment.students_data.section : null
+      },
+      attendance: attendance || [],
+      marks: marks || []
+    });
+  } catch (err) {
+    console.error('Student history error:', err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
 // ─── Custom 404 Page ───
 app.use((req, res) => {
   res.status(404).send(`
@@ -1169,7 +1731,11 @@ app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ message: err.message });
   }
-  res.status(500).json({ message: 'Something went wrong', details: err.message });
+  if (err && err.message === 'Only CSV files allowed') {
+    return res.status(400).json({ message: err.message });
+  }
+  const isProd = process.env.NODE_ENV === 'production';
+  res.status(500).json({ message: 'Something went wrong', details: isProd ? undefined : err.message });
 });
 
 app.listen(PORT, () => {
