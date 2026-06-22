@@ -92,6 +92,10 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
         Broadcasts
       </button>
+      <button class="nav-link" data-pane="myprofile">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        My Profile
+      </button>
     </nav>
     <div class="px-3 py-4 border-t border-slate-100">
       <button id="logout-btn" class="nav-link text-rose-500 hover:bg-rose-50 hover:text-rose-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Secure Logout</button>
@@ -363,6 +367,35 @@
       </div>
 
       <!-- PANE: BROADCASTS (New – similar to teacher but admin delete all) -->
+      <!-- PANE: MY PROFILE (Admin) -->
+      <div class="pane" id="pane-myprofile">
+        <div class="grid gap-5" style="max-width:560px;">
+          <div class="card p-6">
+            <h2 class="text-slate-800 font-bold text-sm mb-4">My Profile</h2>
+            <label class="block text-slate-600 text-xs font-semibold mb-1">Full Name</label>
+            <input type="text" id="adm-fullname" class="form-inp mb-4" />
+            <button id="adm-save-btn" class="btn-primary" style="width:auto;padding:10px 24px;">Save Name</button>
+          </div>
+          <div class="card p-6">
+            <h2 class="text-slate-800 font-bold text-sm mb-4">Change Password</h2>
+            <label class="block text-slate-600 text-xs font-semibold mb-1">Current Password</label>
+            <input type="password" id="adm-current-pw" class="form-inp mb-3" />
+            <label class="block text-slate-600 text-xs font-semibold mb-1">New Password</label>
+            <input type="password" id="adm-new-pw" class="form-inp mb-3" placeholder="min. 8 characters" />
+            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-indigo-700 text-xs font-semibold">OTP Verification</label>
+                <button id="adm-send-otp-btn" type="button" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1 rounded-lg transition-colors">Send OTP</button>
+              </div>
+              <input type="text" id="adm-otp-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                class="form-inp text-center font-bold tracking-widest" placeholder="Enter 6-digit OTP" />
+              <p class="text-indigo-500 text-xs mt-1" id="adm-otp-status"></p>
+            </div>
+            <button id="adm-pw-btn" class="btn-primary" style="width:auto;padding:10px 24px;">Change Password</button>
+          </div>
+        </div>
+      </div>
+
       <div class="pane" id="pane-broadcasts">
         <div class="card p-6 mb-5">
           <h2 class="text-slate-800 font-bold text-sm mb-4">Create New Broadcast</h2>
@@ -1031,7 +1064,8 @@
         history: { pane: 'pane-history', title: 'History', sub: 'Role Changes & CSV Upload Log' },
         editsubjects: { pane: 'pane-editsubjects', title: 'Manage Subjects', sub: 'Add or Remove Enrolled Subjects' },
         edituser: { pane: 'pane-edituser', title: 'Edit User', sub: 'Update Profile Details' },
-        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' }
+        broadcasts: { pane: 'pane-broadcasts', title: 'Broadcasts', sub: 'Manage Broadcasts' },
+        myprofile: { pane: 'pane-myprofile', title: 'My Profile', sub: 'Change Name & Password' }
       };
       function switchPane(k) {
         const d = paneMap[k];
@@ -1053,8 +1087,84 @@
           loadTeacherRequests();
         } else if (k === 'history') {
           loadHistory();
+        } else if (k === 'myprofile') {
+          loadAdminProfile();
         }
       }
+
+      // ── Admin: Load own profile ──
+      function loadAdminProfile() {
+        fetch('/api/profile/me', { headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' } })
+          .then(res => res.json())
+          .then(data => { document.getElementById('adm-fullname').value = data.full_name || ''; })
+          .catch(() => showToast('Failed to load profile.', 'error'));
+      }
+      document.getElementById('adm-save-btn').addEventListener('click', function() {
+        const full_name = document.getElementById('adm-fullname').value.trim();
+        if (!full_name || full_name.length < 3) { showToast('Enter a valid full name.', 'error'); return; }
+        fetch('/api/profile/me', {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ full_name })
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          showToast(data.message || (ok ? 'Saved.' : 'Failed.'), ok ? 'success' : 'error');
+        })
+        .catch(() => showToast('Request failed.', 'error'));
+      });
+      document.getElementById('adm-send-otp-btn').addEventListener('click', function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        document.getElementById('adm-otp-status').textContent = '';
+        fetch('/api/profile/send-password-otp', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          document.getElementById('adm-otp-status').textContent = data.message || (ok ? 'OTP sent!' : 'Failed.');
+          document.getElementById('adm-otp-status').style.color = ok ? '#4f46e5' : '#ef4444';
+          showToast(data.message || (ok ? '📧 OTP sent to your email.' : 'Failed to send OTP.'), ok ? 'success' : 'error');
+          if (ok) {
+            let cd = 60;
+            const interval = setInterval(() => {
+              btn.textContent = 'Resend (' + cd + 's)';
+              cd--;
+              if (cd < 0) { clearInterval(interval); btn.textContent = 'Send OTP'; btn.disabled = false; }
+            }, 1000);
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Send OTP';
+          }
+        })
+        .catch(() => { showToast('Could not send OTP. Try again.', 'error'); btn.disabled = false; btn.textContent = 'Send OTP'; });
+      });
+      document.getElementById('adm-pw-btn').addEventListener('click', function() {
+        const current_password = document.getElementById('adm-current-pw').value;
+        const new_password = document.getElementById('adm-new-pw').value;
+        const otp_code = document.getElementById('adm-otp-code').value.trim();
+        if (!current_password || current_password.length < 8) { showToast('Enter your current password.', 'error'); return; }
+        if (!new_password || new_password.length < 8) { showToast('New password must be at least 8 characters.', 'error'); return; }
+        if (!otp_code || otp_code.length !== 6 || !/^\d{6}$/.test(otp_code)) { showToast('Enter the 6-digit OTP from your email.', 'error'); return; }
+        fetch('/api/profile/password', {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ current_password, new_password, otp_code })
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          showToast(data.message || (ok ? 'Password changed.' : 'Failed.'), ok ? 'success' : 'error');
+          if (ok) {
+            document.getElementById('adm-current-pw').value = '';
+            document.getElementById('adm-new-pw').value = '';
+            document.getElementById('adm-otp-code').value = '';
+            document.getElementById('adm-otp-status').textContent = '';
+          }
+        })
+        .catch(() => showToast('Request failed.', 'error'));
+      });
       document.querySelectorAll('.nav-link[data-pane]').forEach(btn => {
         btn.addEventListener('click', function() {
           switchPane(this.getAttribute('data-pane'));

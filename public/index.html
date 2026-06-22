@@ -141,6 +141,27 @@
             <span id="btn-text">Authenticate Securely</span>
           </button>
         </form>
+
+        <!-- ─── OTP Verification Step (hidden initially) ─── -->
+        <div id="otp-section" class="hidden">
+          <div class="text-center mb-5">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:#eef2ff;border-radius:50%;font-size:22px;margin-bottom:10px;">🔐</div>
+            <h3 class="text-slate-800 font-semibold text-base mb-1">OTP Verification</h3>
+            <p class="text-slate-500 text-sm" id="otp-hint-text">Enter the 6-digit code sent to your email.</p>
+          </div>
+          <div class="mb-4">
+            <label class="block text-slate-700 text-xs font-semibold mb-1.5 uppercase tracking-wide">6-Digit OTP Code</label>
+            <input type="text" id="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+              class="input-field text-center text-xl mono font-bold tracking-[0.25em]"
+              placeholder="● ● ● ● ● ●" style="padding-left:14px;" />
+          </div>
+          <button id="otp-submit-btn" class="btn-primary mb-3">
+            <svg id="otp-spin" class="w-4 h-4 hidden spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 5.373 22 12h-4z"></path></svg>
+            <span id="otp-btn-text">Verify OTP</span>
+          </button>
+          <button id="otp-back-btn" class="w-full text-sm text-slate-500 hover:text-slate-700 py-2 transition-colors">← Back to Login</button>
+          <p class="text-center text-xs text-slate-400 mt-2">Code expires in <span id="otp-countdown" class="font-semibold text-indigo-600">5:00</span></p>
+        </div>
       </div>
 
       <!-- Footer trust badges -->
@@ -170,11 +191,15 @@
       const MAX_ATTEMPTS = 5,
         LOCKOUT_MS = 15 * 60 * 1000;
       const API_CAPTCHA = '/api/auth/captcha',
-        API_LOGIN = '/api/auth/login';
+        API_LOGIN = '/api/auth/login',
+        API_VERIFY_OTP = '/api/auth/verify-login-otp',
+        API_CSRF = '/api/auth/csrf';
       let captchaData = { id: '' },
         failedAttempts = parseInt(sessionStorage.getItem('cms_attempts') || '0', 10),
         isSubmitting = false;
       let csrfToken = '';
+      let otpToken = '';      // set after step 1 passes
+      let otpCountdownTimer = null;
 
       function sanitise(s) {
         if (typeof s !== 'string') return '';
@@ -411,9 +436,22 @@
             },
             body: payload
           })
-          .then(res => res.json().then(data => ({ ok: res.ok, data })))
+          .then(res => res.json().then(data => ({ status: res.status, ok: res.ok, data })))
           .then(result => {
             setLoad(false);
+            // ── OTP step 1 success: show OTP form ──
+            if (result.ok && result.data.otp_required) {
+              otpToken = result.data.otp_token;
+              document.getElementById('otp-hint-text').textContent = result.data.message || 'Enter the 6-digit code sent to your email.';
+              document.getElementById('login-form').classList.add('hidden');
+              document.getElementById('otp-section').classList.remove('hidden');
+              document.getElementById('otp-input').value = '';
+              document.getElementById('otp-input').focus();
+              startOTPCountdown(300); // 5 min
+              showToast('📧 OTP sent! Check your email inbox.', 'success');
+              return;
+            }
+            // ── Direct token (fallback if OTP disabled) ──
             if (result.ok && result.data.token) {
               resetAttempts();
               sessionStorage.setItem('cms_token', sanitise(result.data.token));
@@ -425,11 +463,23 @@
               const map = { student: 'student.html', teacher: 'teacher.html', admin: 'admin.html' };
               const target = map[result.data.role] || map[role] || 'student.html';
               setTimeout(() => window.location.replace(target), 800);
-            } else {
-              recordFailure();
-              showToast(result.data.message || 'Invalid credentials. Access denied.', 'error');
-              loadCaptcha();
+              return;
             }
+            // ── CSRF expired → auto-refresh token without page reload ──
+            if (result.status === 403 && result.data.message && result.data.message.includes('Session expired')) {
+              showToast('🔄 Security token refreshed. Please try again.', 'info');
+              fetch(API_CSRF, { credentials: 'same-origin' })
+                .then(() => {
+                  csrfToken = generateCSRF();
+                  document.getElementById('csrf-token').value = csrfToken;
+                  loadCaptcha();
+                })
+                .catch(() => showToast('Could not refresh session. Please reload the page.', 'error'));
+              return;
+            }
+            recordFailure();
+            showToast(result.data.message || 'Invalid credentials. Access denied.', 'error');
+            loadCaptcha();
           })
           .catch(() => {
             setLoad(false);
@@ -439,6 +489,93 @@
           })
           .finally(() => setLoad(false));
       }, { passive: false });
+
+      // ── OTP Submit Handler ──
+      document.getElementById('otp-submit-btn').addEventListener('click', function() {
+        const code = document.getElementById('otp-input').value.trim();
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showToast('Enter a valid 6-digit OTP code.', 'error');
+          return;
+        }
+        document.getElementById('otp-spin').classList.remove('hidden');
+        document.getElementById('otp-btn-text').textContent = 'Verifying…';
+        document.getElementById('otp-submit-btn').disabled = true;
+
+        fetch(API_VERIFY_OTP, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ otp_token: otpToken, otp_code: code })
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(result => {
+          document.getElementById('otp-spin').classList.add('hidden');
+          document.getElementById('otp-btn-text').textContent = 'Verify OTP';
+          document.getElementById('otp-submit-btn').disabled = false;
+
+          if (result.ok && result.data.token) {
+            clearInterval(otpCountdownTimer);
+            resetAttempts();
+            sessionStorage.setItem('cms_token', sanitise(result.data.token));
+            sessionStorage.setItem('cms_role', sanitise(result.data.role));
+            sessionStorage.setItem('cms_user', sanitise(result.data.full_name || result.data.email));
+            sessionStorage.setItem('cms_login_ts', String(Date.now()));
+            showToast('✅ OTP verified! Redirecting…', 'success');
+            const map = { student: 'student.html', teacher: 'teacher.html', admin: 'admin.html' };
+            setTimeout(() => window.location.replace(map[result.data.role] || 'student.html'), 800);
+          } else {
+            showToast(result.data.message || 'Incorrect OTP. Try again.', 'error');
+            document.getElementById('otp-input').value = '';
+            document.getElementById('otp-input').focus();
+            // If session totally expired, go back to login
+            if (result.data.message && (result.data.message.includes('expired') || result.data.message.includes('login again'))) {
+              setTimeout(resetToLogin, 2000);
+            }
+          }
+        })
+        .catch(() => {
+          document.getElementById('otp-spin').classList.add('hidden');
+          document.getElementById('otp-btn-text').textContent = 'Verify OTP';
+          document.getElementById('otp-submit-btn').disabled = false;
+          showToast('Connection error. Try again.', 'error');
+        });
+      });
+
+      // Allow Enter key in OTP input
+      document.getElementById('otp-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('otp-submit-btn').click();
+      });
+
+      // Back button from OTP
+      document.getElementById('otp-back-btn').addEventListener('click', resetToLogin);
+
+      function resetToLogin() {
+        clearInterval(otpCountdownTimer);
+        otpToken = '';
+        document.getElementById('otp-section').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+        loadCaptcha();
+      }
+
+      function startOTPCountdown(seconds) {
+        clearInterval(otpCountdownTimer);
+        let left = seconds;
+        const el = document.getElementById('otp-countdown');
+        function tick() {
+          const m = Math.floor(left / 60), s = left % 60;
+          el.textContent = m + ':' + String(s).padStart(2, '0');
+          if (left <= 0) {
+            clearInterval(otpCountdownTimer);
+            el.textContent = 'Expired';
+            el.style.color = '#ef4444';
+            showToast('OTP expired. Please login again.', 'error');
+            setTimeout(resetToLogin, 2000);
+          }
+          left--;
+        }
+        tick();
+        otpCountdownTimer = setInterval(tick, 1000);
+      }
 
       // ---------- Other UI events ----------
       document.getElementById('toggle-pw').addEventListener('click', function() {

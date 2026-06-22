@@ -245,7 +245,17 @@
           <label class="block text-slate-600 text-xs font-semibold mb-1">Current Password</label>
           <input type="password" id="prof-current-pw" class="form-inp mb-3" />
           <label class="block text-slate-600 text-xs font-semibold mb-1">New Password</label>
-          <input type="password" id="prof-new-pw" class="form-inp mb-4" placeholder="min. 8 characters" />
+          <input type="password" id="prof-new-pw" class="form-inp mb-3" placeholder="min. 8 characters" />
+          <!-- OTP field for password change -->
+          <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-indigo-700 text-xs font-semibold">OTP Verification</label>
+              <button id="prof-send-otp-btn" type="button" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1 rounded-lg transition-colors">Send OTP</button>
+            </div>
+            <input type="text" id="prof-otp-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+              class="form-inp text-center font-bold tracking-widest" placeholder="Enter 6-digit OTP" />
+            <p class="text-indigo-500 text-xs mt-1" id="prof-otp-status"></p>
+          </div>
           <button id="prof-pw-btn" class="btn-primary" style="width:auto;padding:10px 24px;">Change Password</button>
         </div>
       </div>
@@ -653,18 +663,63 @@
           })
           .catch(() => showToast('Request failed.', 'error'));
       });
+      // ── Send OTP for password change ──
+      document.getElementById('prof-send-otp-btn').addEventListener('click', function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        document.getElementById('prof-otp-status').textContent = '';
+        fetch('/api/profile/send-password-otp', {
+          method: 'POST',
+          headers: authHeaders()
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          document.getElementById('prof-otp-status').textContent = data.message || (ok ? 'OTP sent!' : 'Failed.');
+          document.getElementById('prof-otp-status').style.color = ok ? '#4f46e5' : '#ef4444';
+          showToast(data.message || (ok ? '📧 OTP sent to your email.' : 'Failed to send OTP.'), ok ? 'success' : 'error');
+          if (ok) {
+            let cd = 60;
+            const interval = setInterval(() => {
+              btn.textContent = 'Resend (' + cd + 's)';
+              cd--;
+              if (cd < 0) { clearInterval(interval); btn.textContent = 'Send OTP'; btn.disabled = false; }
+            }, 1000);
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Send OTP';
+          }
+        })
+        .catch(() => {
+          showToast('Could not send OTP. Try again.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Send OTP';
+        });
+      });
+
       document.getElementById('prof-pw-btn').addEventListener('click', function() {
         const current_password = document.getElementById('prof-current-pw').value;
         const new_password = document.getElementById('prof-new-pw').value;
+        const otp_code = document.getElementById('prof-otp-code').value.trim();
         if (!current_password || current_password.length < 8) { showToast('Enter your current password.', 'error'); return; }
         if (!new_password || new_password.length < 8) { showToast('New password must be at least 8 characters.', 'error'); return; }
-        fetch('/api/profile/password', { method: 'PUT', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ current_password, new_password }) })
-          .then(res => res.json().then(data => ({ ok: res.ok, data })))
-          .then(({ ok, data }) => {
-            showToast(data.message || (ok ? 'Password changed.' : 'Failed.'), ok ? 'success' : 'error');
-            if (ok) { document.getElementById('prof-current-pw').value = ''; document.getElementById('prof-new-pw').value = ''; }
-          })
-          .catch(() => showToast('Request failed.', 'error'));
+        if (!otp_code || otp_code.length !== 6 || !/^\d{6}$/.test(otp_code)) { showToast('Enter the 6-digit OTP from your email.', 'error'); return; }
+        fetch('/api/profile/password', {
+          method: 'PUT',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ current_password, new_password, otp_code })
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          showToast(data.message || (ok ? 'Password changed.' : 'Failed.'), ok ? 'success' : 'error');
+          if (ok) {
+            document.getElementById('prof-current-pw').value = '';
+            document.getElementById('prof-new-pw').value = '';
+            document.getElementById('prof-otp-code').value = '';
+            document.getElementById('prof-otp-status').textContent = '';
+          }
+        })
+        .catch(() => showToast('Request failed.', 'error'));
       });
 
       // ─── Student History drill-down (from roster) ───
