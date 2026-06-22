@@ -12,6 +12,7 @@ const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -173,7 +174,7 @@ app.get('/', (req, res) => {
     httpOnly: false, // JS needs to read this to echo it back
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 600000 // 10 minutes — enough time to fill the login form
+    maxAge: 7200000 // 2 hours — extended so cookie doesn't expire mid-session
   });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
@@ -188,6 +189,69 @@ setInterval(() => {
     if (data.expires < now) captchaStore.delete(id);
   }
 }, 600000);
+
+// ─── Gmail Email Transporter ───
+let emailTransporter = null;
+if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+  emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
+  });
+  emailTransporter.verify((err) => {
+    if (err) console.error('[EMAIL] Gmail transporter error:', err.message);
+    else console.log('[EMAIL] Gmail transporter ready ✓');
+  });
+} else {
+  console.warn('[EMAIL] GMAIL_USER or GMAIL_APP_PASSWORD not set — OTP emails will be logged only');
+}
+
+// ─── OTP Store (in-memory, 5 min TTL) ───
+const otpStore = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, data] of otpStore.entries()) {
+    if (data.expires < now) otpStore.delete(key);
+  }
+}, 300000); // clean every 5 min
+
+function generateOTPCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendOTPEmail(toEmail, otp, purpose, userName) {
+  const purposeText = purpose === 'password_change' ? 'Password Change' : 'Login Verification';
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="display:inline-block;background:#4f46e5;color:#fff;width:48px;height:48px;border-radius:50%;font-size:22px;line-height:48px;text-align:center;">🔐</div>
+      </div>
+      <h2 style="color:#1e293b;margin:0 0 8px;font-size:20px;">Verification Code</h2>
+      <p style="color:#475569;margin:0 0 20px;font-size:14px;">Hello <strong>${userName || 'User'}</strong>, your OTP for <strong>${purposeText}</strong> is:</p>
+      <div style="background:#4f46e5;color:#fff;font-size:34px;font-weight:700;letter-spacing:10px;text-align:center;padding:22px 16px;border-radius:10px;margin:20px 0;">${otp}</div>
+      <p style="color:#64748b;font-size:13px;margin:0 0 8px;">⏱ This code expires in <strong>5 minutes</strong>.</p>
+      <p style="color:#94a3b8;font-size:12px;margin:0;">Do not share this code. If you did not request this, contact your administrator immediately.</p>
+      <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
+      <p style="color:#cbd5e1;font-size:11px;text-align:center;margin:0;">College Management System — Automated Security Alert</p>
+    </div>
+  `;
+  if (!emailTransporter) {
+    console.log(`[OTP-DEV] Email not configured. OTP for ${toEmail} (${purpose}): ${otp}`);
+    return true; // dev mode mein always success
+  }
+  try {
+    await emailTransporter.sendMail({
+      from: `"CMS Security" <${process.env.GMAIL_USER}>`,
+      to: toEmail,
+      subject: `[CMS] Your OTP: ${otp} (${purposeText})`,
+      html: htmlBody
+    });
+    console.log(`[OTP] Sent to ${toEmail} for ${purpose}`);
+    return true;
+  } catch (err) {
+    console.error('[OTP] Email send error:', err.message);
+    return false;
+  }
+}
 
 function sanitise(str) {
   if (typeof str !== 'string') return '';
@@ -275,6 +339,25 @@ function isValidEmail(str) {
 }
 
 // ─── 1. CAPTCHA ───
+// ─── 1b. CSRF Token Refresh (auto-called by frontend on session expiry) ───
+app.get('/api/auth/csrf', (req, res) => {
+  const csrfToken = crypto.randomBytes(24).toString('hex');
+  res.cookie('csrf_token', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7200000 // 2 hours
+  });
+  res.json({ success: true });
+});
+
+// OTP rate limiter — 3 requests per 10 min per IP
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 3,
+  message: { message: 'Too many OTP requests. Please wait 10 minutes.' }
+});
+
 app.get('/api/auth/captcha', (req, res) => {
   const ops = ['+', '-', '*'];
   const op = ops[Math.floor(Math.random() * 3)];
@@ -373,27 +456,155 @@ app.post('/api/auth/login', loginLimiter, [
 
     const token = generateToken({ id: profile.id, email, role: profile.role });
 
-    res.cookie('cms_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 3600000
+    // ─── OTP Step: Generate and send OTP instead of issuing full JWT ───
+    const otpCode = generateOTPCode();
+    const otpKey = `${profile.id}:login`;
+    otpStore.set(otpKey, {
+      code: otpCode,
+      expires: Date.now() + 5 * 60 * 1000, // 5 min
+      attempts: 0,
+      email
     });
+
+    // OTP token — short-lived JWT proving step 1 passed (no full access yet)
+    const otpToken = jwt.sign(
+      { id: profile.id, email, role: profile.role, purpose: 'login_otp' },
+      JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+    const userName = profile.full_name || email;
+    const sent = await sendOTPEmail(email, otpCode, 'login', userName);
 
     await supabaseAdmin.from('security_logs').insert({
       user_id: profile.id,
       ip_address: req.ip,
       user_agent: req.headers['user-agent'],
-      event_type: 'LOGIN_SUCCESS',
+      event_type: 'OTP_SENT_LOGIN',
       browser_fingerprint: device_fingerprint,
       severity: 'OK'
     });
 
-    console.log(`[LOGIN] Success: ${email}, role: ${profile.role}`);
-    res.json({ token, role: profile.role, email, full_name: profile.full_name });
+    console.log(`[LOGIN] OTP sent to ${email} for login`);
+    return res.json({
+      otp_required: true,
+      otp_token: otpToken,
+      message: sent
+        ? `OTP sent to ${email.replace(/(.{2}).*(@.*)/, '$1****$2')}. Check your inbox.`
+        : `OTP generated (email unavailable). Check server logs.`
+    });
   } catch (err) {
     console.error('[LOGIN] Unexpected error:', err);
     res.status(500).json({ message: 'Internal server error. Try again.' });
+  }
+});
+
+// ─── 2b. Verify Login OTP → Issue Full JWT ───
+app.post('/api/auth/verify-login-otp', [
+  body('otp_token').notEmpty(),
+  body('otp_code').isLength({ min: 6, max: 6 }).isNumeric()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: 'Invalid input.' });
+
+  const { otp_token, otp_code } = req.body;
+
+  // Verify the short-lived OTP token
+  const decoded = verifyToken(otp_token);
+  if (!decoded || decoded.purpose !== 'login_otp') {
+    return res.status(401).json({ message: 'OTP session expired. Please login again.' });
+  }
+
+  const otpKey = `${decoded.id}:login`;
+  const stored = otpStore.get(otpKey);
+
+  if (!stored) {
+    return res.status(400).json({ message: 'OTP expired or not found. Please login again.' });
+  }
+  if (stored.expires < Date.now()) {
+    otpStore.delete(otpKey);
+    return res.status(400).json({ message: 'OTP has expired (5 min limit). Please login again.' });
+  }
+  if (stored.attempts >= 3) {
+    otpStore.delete(otpKey);
+    return res.status(429).json({ message: 'Too many incorrect attempts. Please login again.' });
+  }
+  if (stored.code !== String(otp_code)) {
+    stored.attempts++;
+    otpStore.set(otpKey, stored);
+    const left = 3 - stored.attempts;
+    return res.status(401).json({ message: `Incorrect OTP. ${left} attempt(s) remaining.` });
+  }
+
+  // OTP correct — issue full JWT
+  otpStore.delete(otpKey);
+  const fullToken = generateToken({ id: decoded.id, email: decoded.email, role: decoded.role });
+
+  res.cookie('cms_token', fullToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 3600000
+  });
+
+  await supabaseAdmin.from('security_logs').insert({
+    user_id: decoded.id,
+    ip_address: req.ip,
+    user_agent: req.headers['user-agent'],
+    event_type: 'LOGIN_SUCCESS',
+    severity: 'OK'
+  });
+
+  // Fetch full name for response
+  const { data: profile } = await supabaseAdmin
+    .from('profiles').select('full_name, role').eq('id', decoded.id).maybeSingle();
+
+  console.log(`[LOGIN] OTP verified, full access granted: ${decoded.email}`);
+  res.json({
+    token: fullToken,
+    role: decoded.role,
+    email: decoded.email,
+    full_name: profile ? profile.full_name : decoded.email
+  });
+});
+
+// ─── 2c. Send OTP for Password Change (authenticated) ───
+app.post('/api/profile/send-password-otp', verifyTokenAPI, otpLimiter, async (req, res) => {
+  try {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(req.user.id);
+    if (!authUser || !authUser.user) return res.status(404).json({ message: 'Account not found' });
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles').select('full_name').eq('id', req.user.id).maybeSingle();
+
+    const email = authUser.user.email;
+    const userName = profile ? profile.full_name : email;
+
+    const otpCode = generateOTPCode();
+    const otpKey = `${req.user.id}:password_change`;
+    otpStore.set(otpKey, {
+      code: otpCode,
+      expires: Date.now() + 5 * 60 * 1000,
+      attempts: 0,
+      email
+    });
+
+    const sent = await sendOTPEmail(email, otpCode, 'password_change', userName);
+    await supabaseAdmin.from('security_logs').insert({
+      user_id: req.user.id, ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      event_type: 'OTP_SENT_PWCHANGE', severity: 'OK'
+    });
+
+    res.json({
+      message: sent
+        ? `OTP sent to ${email.replace(/(.{2}).*(@.*)/, '$1****$2')}. Check your inbox.`
+        : 'OTP generated (email unavailable — check server logs).'
+    });
+  } catch (err) {
+    console.error('Send password OTP error:', err);
+    res.status(500).json({ message: 'Could not send OTP. Try again.' });
   }
 });
 
@@ -1626,12 +1837,32 @@ app.put('/api/profile/me', verifyTokenAPI, [
 
 app.put('/api/profile/password', verifyTokenAPI, [
   body('current_password').isLength({ min: 8 }),
-  body('new_password').isLength({ min: 8 }).withMessage('New password must be at least 8 characters')
+  body('new_password').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
+  body('otp_code').isLength({ min: 6, max: 6 }).isNumeric().withMessage('OTP must be 6 digits')
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
-  const { current_password, new_password } = req.body;
+  const { current_password, new_password, otp_code } = req.body;
   try {
+    // ─── Verify OTP first ───
+    const otpKey = `${req.user.id}:password_change`;
+    const stored = otpStore.get(otpKey);
+    if (!stored) return res.status(400).json({ message: 'OTP not found. Click "Send OTP" first.' });
+    if (stored.expires < Date.now()) {
+      otpStore.delete(otpKey);
+      return res.status(400).json({ message: 'OTP has expired (5 min limit). Click "Send OTP" again.' });
+    }
+    if (stored.attempts >= 3) {
+      otpStore.delete(otpKey);
+      return res.status(429).json({ message: 'Too many incorrect OTP attempts. Click "Send OTP" again.' });
+    }
+    if (stored.code !== String(otp_code)) {
+      stored.attempts++;
+      otpStore.set(otpKey, stored);
+      return res.status(401).json({ message: `Incorrect OTP. ${3 - stored.attempts} attempt(s) remaining.` });
+    }
+    otpStore.delete(otpKey); // OTP used — delete
+
     const { data: authUser, error: getErr } = await supabaseAdmin.auth.admin.getUserById(req.user.id);
     if (getErr || !authUser || !authUser.user) return res.status(404).json({ message: 'Account not found' });
 
