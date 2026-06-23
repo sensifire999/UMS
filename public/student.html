@@ -255,7 +255,7 @@
       const token=sessionStorage.getItem('cms_token'), role=sessionStorage.getItem('cms_role'), username=sessionStorage.getItem('cms_user'), loginFP=sessionStorage.getItem('cms_fp'), loginTS=parseInt(sessionStorage.getItem('cms_login_ts')||'0',10);
       if(!token||!username){ window.location.replace('index.html'); throw new Error('No token'); }
       if(role&&role!=='student'){ const map={teacher:'teacher.html',admin:'admin.html'}; window.location.replace(map[role]||'index.html'); throw new Error('Wrong role'); }
-      const SESSION_TTL=60*60*1000;
+      const SESSION_TTL=8*60*60*1000; // BUG2 FIX: 8h — JWT expiry (server) se match karo, race condition khatam
       if(Date.now()-loginTS>SESSION_TTL){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Expired'); }
 
       function fnv1a(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(16).padStart(8,'0'); }
@@ -445,7 +445,12 @@
       loadBroadcasts();
 
       function fetchStudentDashboard(){ fetch('/api/student/dashboard', { method:'GET', credentials:'same-origin', headers:{'Authorization':'Bearer '+token,'X-Requested-With':'XMLHttpRequest'} })
-        .then(res=>{ if(res.status===401||res.status===403){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Unauthorized'); } return res.json(); })
+        .then(res=>{
+          // BUG5 FIX: 401 pe server ka actual message dikhao (expired vs invalid), phir redirect
+          if(res.status===401){ return res.json().then(d=>{ sessionStorage.clear(); showToast((d&&d.message)||'Session expired. Please login again.','error'); setTimeout(()=>window.location.replace('index.html'),1800); throw new Error('Unauthorized'); }); }
+          if(res.status===403){ sessionStorage.clear(); window.location.replace('index.html'); throw new Error('Forbidden'); }
+          return res.json();
+        })
         .then(data=>{ renderDashboard(data); })
         .catch(err=>{ if(err.message!=='Unauthorized'){ console.warn('Dashboard fetch failed:', err); showToast('Failed to load dashboard data.', 'error'); } });
       } fetchStudentDashboard();

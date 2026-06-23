@@ -468,9 +468,11 @@
             // ── CSRF expired → auto-refresh token without page reload ──
             if (result.status === 403 && result.data.message && result.data.message.includes('Session expired')) {
               showToast('🔄 Security token refreshed. Please try again.', 'info');
+              // BUG4 FIX: response.json() se seedha token lo — cookie set hone ka wait nahi
               fetch(API_CSRF, { credentials: 'same-origin' })
-                .then(() => {
-                  csrfToken = generateCSRF();
+                .then(r => r.json())
+                .then(data => {
+                  csrfToken = data.token || generateCSRF();
                   document.getElementById('csrf-token').value = csrfToken;
                   loadCaptcha();
                 })
