@@ -89,29 +89,48 @@ function generateToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '8h' } // BUG2&3 FIX: 1h se 8h — client SESSION_TTL se match karo
   );
 }
 
 function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
-  } catch {
+  } catch (err) {
+    // BUG5 FIX: expired aur invalid ka alag signal — client ko sahi message dikhao
+    if (err && err.name === 'TokenExpiredError') return { __expired: true };
     return null;
   }
 }
 
 // ─── API Middleware ───
 function verifyTokenAPI(req, res, next) {
+  // BUG5 FIX: sirf Authorization header nahi — cms_token cookie bhi check karo
+  // (protectStatic cookie use karta hai, lekin API calls header use karte hain;
+  //  dono support karo taaki session ka koi bhi path kaam kare)
+  let token = null;
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.cookies && req.cookies.cms_token) {
+    token = req.cookies.cms_token;
   }
-  const token = authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Session not found. Please login again.', code: 'NO_TOKEN' });
+  }
+
   const decoded = verifyToken(token);
+
   if (!decoded) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: 'Invalid session. Please login again.', code: 'INVALID_TOKEN' });
   }
+
+  // BUG2 FIX: expired token pe clear message taaki client "Session expired" dikhaye logout ke bajaye
+  if (decoded.__expired) {
+    return res.status(401).json({ message: 'Your session has expired. Please login again.', code: 'TOKEN_EXPIRED' });
+  }
+
   req.user = decoded;
   next();
 }
@@ -164,20 +183,25 @@ const publicPath = process.env.PUBLIC_PATH
   ? path.resolve(process.env.PUBLIC_PATH)
   : path.join(__dirname, '..', 'public'); // backend/ se ek upar jaao, phir public/
 
-app.use(protectStatic);
-app.use(express.static(publicPath));
-
-// ─── Root route ───
-app.get('/', (req, res) => {
+// ─── Root route — MUST be BEFORE express.static ───
+// BUG1&4 FIX: express.static pehle GET / intercept karta tha, isliye CSRF cookie
+// kabhi set nahi hoti thi → generateCSRF() random fallback deta tha → server mismatch
+// → "Session expired. Please refresh". /index.html direct access bhi cover karo.
+app.get(['/', '/index.html'], (req, res) => {
   const csrfToken = crypto.randomBytes(24).toString('hex');
   res.cookie('csrf_token', csrfToken, {
-    httpOnly: false, // JS needs to read this to echo it back
+    httpOnly: false, // JS ko ye read karna hai echo ke liye
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 7200000 // 2 hours — extended so cookie doesn't expire mid-session
+    maxAge: 28800000 // BUG2&3 FIX: 8h — JWT expiry se match karo
   });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
+
+app.use(protectStatic);
+// BUG1 FIX: index:false — express.static ab GET / ke liye index.html serve nahi karega
+// (upar wala route handle karta hai aur CSRF cookie properly set karta hai)
+app.use(express.static(publicPath, { index: false }));
 
 // ─── CAPTCHA Store ───
 const captchaStore = new Map();
@@ -346,9 +370,10 @@ app.get('/api/auth/csrf', (req, res) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 7200000 // 2 hours
+    maxAge: 28800000 // BUG4 FIX: 8h — JWT expiry se match karo
   });
-  res.json({ success: true });
+  // BUG4 FIX: token response body mein bhi do — client cookie timing pe depend na kare
+  res.json({ success: true, token: csrfToken });
 });
 
 // OTP rate limiter — 3 requests per 10 min per IP
@@ -545,7 +570,7 @@ app.post('/api/auth/verify-login-otp', [
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 3600000
+    maxAge: 28800000 // BUG2 FIX: 8h — JWT expiry se match karo
   });
 
   await supabaseAdmin.from('security_logs').insert({
